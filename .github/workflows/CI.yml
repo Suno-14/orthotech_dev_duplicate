@@ -1,0 +1,84 @@
+name: OrthoTech CI
+
+on:
+  push:
+    branches: [ main, dev, feature/* ]   
+  pull_request:
+    branches: [ main ]                   
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            build-essential \
+            libeigen3-dev
+
+      - name: Install ur_rtde
+        run: |
+          sudo apt-get install -y \
+            libboost-all-dev \
+            libpthread-stubs0-dev
+          git clone https://gitlab.com/sdurobotics/ur_rtde.git
+          cd ur_rtde
+          mkdir build && cd build
+          cmake ..
+          make -j$(nproc)
+          sudo make install
+
+      - name: Check project structure
+        run: |
+          echo "Checking required files..."
+          files=(
+            "CMakeLists.txt"
+            "src/main.cpp"
+            "src/calculations.cpp"
+            "include/calculations.hpp"
+          )
+          missing=0
+          for file in "${files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "MISSING: $file"
+              missing=1
+            else
+              echo "  OK: $file"
+            fi
+          done
+          if [ $missing -ne 0 ]; then
+            echo "Required files missing. Build failed."
+            exit 1
+          fi
+
+      - name: Configure with CMake
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          cd build
+          make -j$(nproc)
+
+      - name: Check for debug markers
+        run: |
+          echo "Scanning for TODO/FIXME/HACK..."
+          if grep -rn "TODO\|FIXME\|HACK" src/; then
+            echo "WARNING: Debug markers found in src/"
+          else
+            echo "No debug markers found!"
+          fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: orthotech-binary
+          path: build/main     
