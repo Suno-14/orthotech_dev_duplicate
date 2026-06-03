@@ -1,0 +1,8 @@
+{
+  "name": "orthotech",
+  "version": "0.1.0",
+  "dependencies": [
+    "eigen3"
+  ],
+  "builtin-baseline": "a34c873a9717e40142f5b3beed28b48ef68d4300"
+}
