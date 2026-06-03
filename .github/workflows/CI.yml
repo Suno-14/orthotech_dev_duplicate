@@ -50,26 +50,19 @@ jobs:
         if: runner.os == 'Windows'
         uses: lukka/get-cmake@latest
 
-      - name: Install vcpkg
-        if: runner.os == 'Windows'
-        uses: lukka/run-vcpkg@v11
-
-      - name: Install Eigen
+      - name: Install Eigen (Windows)      
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          vcpkg install eigen3:x64-windows
-
-      - name: Configure Project (Linux)
-        if: runner.os == 'Linux'
-        run: cmake -S . -B build
+          C:\vcpkg\vcpkg install eigen3:x64-windows
+          C:\vcpkg\vcpkg integrate install
 
       - name: Configure Project (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           cmake -S . -B build `
-            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+            -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
 
       - name: Build Project
         run: cmake --build build --config Release
