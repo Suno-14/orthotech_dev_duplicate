@@ -1,17 +1,16 @@
 cmake_minimum_required(VERSION 3.10)
+
 project(Calculations CXX)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Eigen3 REQUIRED)
+add_executable(main
+    src/main.cpp
+    src/calculations.cpp
+)
 
-
-include_directories(include)
-
-add_executable(main src/main.cpp
-src/calculations.cpp)
-
-target_link_libraries(main
-    Eigen3::Eigen
+target_include_directories(main PRIVATE
+    include
+    external/eigen
 )
