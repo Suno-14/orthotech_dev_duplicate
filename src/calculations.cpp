@@ -1,9 +1,6 @@
 #include <iostream>
 #include <calculations.hpp>
 #include <Eigen/Eigenvalues>
-#include <ur_rtde/rtde_control_interface.h>
-#include <ur_rtde/rtde_receive_interface.h>
-#include <ur_rtde/rtde_io_interface.h>
 
 using namespace std;
 using namespace Eigen;
