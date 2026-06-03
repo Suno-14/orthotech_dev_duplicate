@@ -56,38 +56,33 @@ jobs:
         if: runner.os == 'Windows'
         uses: lukka/get-cmake@latest
 
-      - name: Download Eigen (Windows)
+      - name: Download and Install Eigen (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          # download eigen source
           Invoke-WebRequest `
             -Uri "https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip" `
             -OutFile eigen.zip
+
+          # extract
           Expand-Archive eigen.zip -DestinationPath C:\eigen
-          Write-Host "Eigen extracted to C:\eigen\eigen-3.4.0"
-          
-      - name: Debug Eigen extraction
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Write-Host "=== Contents of C:\eigen ==="
-          Get-ChildItem -Recurse C:\eigen | Select-Object FullName
+
+          # build and install (this generates Eigen3Config.cmake)
+          cmake -S C:\eigen\eigen-3.4.0 -B C:\eigen\build
+          cmake --install C:\eigen\build --prefix C:\eigen\install
+
+          # verify Eigen3Config.cmake was generated
+          Write-Host "=== Verifying Eigen3Config.cmake ==="
+          Get-ChildItem -Recurse "C:\eigen\install" -Filter "Eigen3Config.cmake"
 
       - name: Configure Project (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           cmake -S . -B build `
-            -DEigen3_DIR="C:/eigen/eigen-3.4.0/cmake" `
+            -DCMAKE_PREFIX_PATH="C:/eigen/install" `
             -DVCPKG_MANIFEST_MODE=OFF
-      
-      # - name: Configure Project (Windows)
-      #   if: runner.os == 'Windows'
-      #   shell: pwsh
-      #   run: |
-      #     cmake -S . -B build `
-      #       -DEigen3_DIR="C:/eigen/eigen-3.4.0" `
-      #       -DVCPKG_MANIFEST_MODE=OFF
 
       # -----------------------------------------------
       # Both OS
