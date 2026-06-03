@@ -27,9 +27,6 @@ jobs:
       - name: Generate Requirements
         run: python scripts/generate_requirements.py
 
-      # -----------------------------------------------
-      # Linux
-      # -----------------------------------------------
       - name: Install Linux Dependencies
         if: runner.os == 'Linux'
         run: |
@@ -45,9 +42,7 @@ jobs:
         if: runner.os == 'Linux'
         run: cmake -S . -B build
 
-      # -----------------------------------------------
-      # Windows
-      # -----------------------------------------------
+
       - name: Setup MSVC
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
@@ -84,9 +79,7 @@ jobs:
             -DCMAKE_PREFIX_PATH="C:/eigen/install" `
             -DVCPKG_MANIFEST_MODE=OFF
 
-      # -----------------------------------------------
-      # Both OS
-      # -----------------------------------------------
+
       - name: Build Project
         run: cmake --build build --config Release
 
