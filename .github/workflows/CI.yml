@@ -61,12 +61,22 @@ jobs:
           git pull
           .\bootstrap-vcpkg.bat -disableMetrics
 
-      - name: Install Eigen (Windows)   
+      - name: Download Eigen (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          C:\vcpkg\vcpkg install eigen3:x64-windows
-          C:\vcpkg\vcpkg integrate install
+          Invoke-WebRequest -Uri "https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip" -OutFile eigen.zip
+          Expand-Archive eigen.zip -DestinationPath C:\eigen
+          Write-Host "Eigen downloaded to C:\eigen"
+
+      - name: Configure Project (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cmake -S . -B build `
+            -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+            -DEigen3_DIR="C:/eigen/eigen-3.4.0" `
+            -DVCPKG_MANIFEST_MODE=OFF
           
       - name: Find Eigen3 location (Windows)
         if: runner.os == 'Windows'
