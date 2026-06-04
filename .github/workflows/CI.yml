@@ -38,12 +38,6 @@ jobs:
             cmake \
             libeigen3-dev
 
-<<<<<<< HEAD
-      - name: Configure Project (Linux)
-        if: runner.os == 'Linux'
-        run: cmake -S . -B build
-
-=======
       - name: Build and Install ur_rtde from Source (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -55,57 +49,25 @@ jobs:
           make -j$(nproc)
           sudo make install
           sudo ldconfig
->>>>>>> 6fe8166 (Added ur_rtde for windows and linux)
+
+      - name: Configure Project (Linux)
+        if: runner.os == 'Linux'
+        run: cmake -S . -B build
 
       - name: Setup MSVC
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Install CMake
+      - name: Install CMake (Windows)
         if: runner.os == 'Windows'
         uses: lukka/get-cmake@latest
 
-<<<<<<< HEAD
-      - name: Download and Install Eigen (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          # download eigen source
-          Invoke-WebRequest `
-            -Uri "https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip" `
-            -OutFile eigen.zip
-
-          # extract
-          Expand-Archive eigen.zip -DestinationPath C:\eigen
-
-          # build and install 
-          cmake -S C:\eigen\eigen-3.4.0 -B C:\eigen\build
-          cmake --install C:\eigen\build --prefix C:\eigen\install
-
-          # verify Eigen3Config.cmake
-          Write-Host "=== Verifying Eigen3Config.cmake ==="
-          Get-ChildItem -Recurse "C:\eigen\install" -Filter "Eigen3Config.cmake"
-
-      - name: Configure Project (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          cmake -S . -B build `
-            -DCMAKE_PREFIX_PATH="C:/eigen/install" `
-            -DVCPKG_MANIFEST_MODE=OFF
-
-=======
       - name: Setup vcpkg and Install Windows Dependencies
         if: runner.os == 'Windows'
         run: |
           git clone https://github.com/microsoft/vcpkg.git
           .\vcpkg\bootstrap-vcpkg.bat
           .\vcpkg\vcpkg install eigen3:x64-windows ur-rtde:x64-windows
-
-      - name: Configure Project (Linux)
-        if: runner.os == 'Linux'
-        run: cmake -S . -B build
->>>>>>> 6fe8166 (Added ur_rtde for windows and linux)
 
       - name: Configure Project (Windows)
         if: runner.os == 'Windows'
@@ -129,9 +91,4 @@ jobs:
 
       - name: Run Executable (Windows)
         if: runner.os == 'Windows'
-<<<<<<< HEAD
-        shell: pwsh
         run: .\build\Release\main.exe
-=======
-        run: .\build\Release\arith.exe
->>>>>>> 6fe8166 (Added ur_rtde for windows and linux)
