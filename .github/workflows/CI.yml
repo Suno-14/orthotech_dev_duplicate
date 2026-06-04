@@ -72,11 +72,12 @@ jobs:
         shell: pwsh
         run: |
           choco install boost-msvc-14.3 -y
-          Get-ChildItem "C:\local\" 
           $boostDir = Get-ChildItem "C:\local\" -Filter "boost*" | Select-Object -First 1
-          echo "BOOST_ROOT=C:\local\$($boostDir.Name)" >> $env:GITHUB_ENV
-          echo "Boost found at: C:\local\$($boostDir.Name)"
-
+          $boostRoot = "C:\local\$($boostDir.Name)"
+          echo "BOOST_ROOT=$boostRoot" >> $env:GITHUB_ENV
+          echo "BOOST_INCLUDEDIR=$boostRoot" >> $env:GITHUB_ENV
+          echo "BOOST_LIBRARYDIR=$boostRoot\lib64-msvc-14.3" >> $env:GITHUB_ENV
+          echo "Boost found at: $boostRoot"
       # - name: Install Boost via Chocolatey (Windows)
       #   if: runner.os == 'Windows'
       #   shell: pwsh
@@ -131,6 +132,9 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release `
             -DPYTHON_BINDINGS:BOOL=OFF `
             -DBOOST_ROOT="$env:BOOST_ROOT" `
+            -DBOOST_INCLUDEDIR="$env:BOOST_ROOT" `
+            -DBOOST_LIBRARYDIR="$env:BOOST_ROOT\lib64-msvc-14.3" `
+            -DBoost_NO_BOOST_CMAKE=ON `
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -DVCPKG_TARGET_TRIPLET=x64-windows `
             -DCMAKE_INSTALL_PREFIX="C:\ur_rtde_install"
