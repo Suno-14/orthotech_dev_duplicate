@@ -15,10 +15,21 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
-      - name: Install Linux build tools
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Generate Requirements
+        run: python scripts/generate_requirements.py
+
+      # LINUX 
+
+      - name: Install Linux Dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
@@ -26,7 +37,27 @@ jobs:
             build-essential \
             g++ \
             make \
-            cmake
+            cmake \
+            libeigen3-dev \
+            libboost-all-dev
+
+      - name: Build and Install ur_rtde from Source (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          git clone https://gitlab.com/sdurobotics/ur_rtde.git
+          cd ur_rtde
+          git submodule update --init --recursive
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDINGS:BOOL=OFF
+          make -j$(nproc)
+          sudo make install
+          sudo ldconfig
+
+      - name: Configure Project (Linux)
+        if: runner.os == 'Linux'
+        run: cmake -S . -B build
+
+      # WINDOWS 
 
       - name: Setup MSVC
         if: runner.os == 'Windows'
@@ -36,11 +67,80 @@ jobs:
         if: runner.os == 'Windows'
         uses: lukka/get-cmake@latest
 
-      - name: Configure Project
-        run: cmake -S . -B build
+      - name: Setup vcpkg (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          cd vcpkg
+          .\bootstrap-vcpkg.bat -disableMetrics
+
+      - name: Cache vcpkg packages (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        id: cache-eigen
+        with:
+          path: vcpkg/installed
+          key: vcpkg-eigen3-boost-x64-windows-${{ hashFiles('config/dependencies.yml') }}
+          restore-keys: |
+            vcpkg-eigen3-boost-x64-windows-
+
+      - name: Install Eigen and Boost via vcpkg (Windows)
+        if: runner.os == 'Windows' && steps.cache-eigen.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          .\vcpkg\vcpkg.exe install eigen3:x64-windows boost:x64-windows
+
+      - name: Cache ur_rtde install (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        id: cache-ur-rtde
+        with:
+          path: C:\ur_rtde_install
+          key: ur-rtde-x64-windows-${{ hashFiles('config/dependencies.yml') }}
+          restore-keys: |
+            ur-rtde-x64-windows-
+
+      - name: Build and Install ur_rtde from Source (Windows)
+        if: runner.os == 'Windows' && steps.cache-ur-rtde.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          git clone https://gitlab.com/sdurobotics/ur_rtde.git
+          cd ur_rtde
+          git submodule update --init --recursive
+          mkdir build
+          cd build
+          cmake .. `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DPYTHON_BINDINGS:BOOL=OFF `
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows `
+            -DCMAKE_INSTALL_PREFIX="C:\ur_rtde_install"
+          cmake --build . --config Release
+          cmake --install . --config Release
+
+      - name: Configure Project (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cmake -S . -B build `
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows `
+            -DCMAKE_PREFIX_PATH="C:\ur_rtde_install"
+
+      # BUILD & RUN 
 
       - name: Build Project
         run: cmake --build build --config Release
+
+      - name: List Build Files (Linux)
+        if: runner.os == 'Linux'
+        run: find build -type f
+
+      - name: List Build Files (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Get-ChildItem -Recurse build
 
       - name: Run Executable (Linux)
         if: runner.os == 'Linux'
