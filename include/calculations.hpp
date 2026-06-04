@@ -13,7 +13,7 @@ public:
     double Multiplication(const double &a, const double &b);
     double Division(const double &a, const double &b);
     Matrix3d matrixMultiplication(Matrix3d mat1, Matrix3d mat2);
-    double get_timestamps();
+    double get_timestamps(const string &robot_ip);
 };
 
 #endif
