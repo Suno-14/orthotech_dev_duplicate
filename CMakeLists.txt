@@ -13,7 +13,7 @@ include_directories(include)
 add_executable(main src/main.cpp
 src/calculations.cpp)
 
-target_include_direcotories(main
+target_include_directories(main
     PRIVATE
     inlcude
     )
