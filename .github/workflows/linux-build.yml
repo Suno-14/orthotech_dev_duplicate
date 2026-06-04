@@ -9,15 +9,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+
+      - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install Dependencies
         run: |
           sudo apt update
+          sudo apt install -y \
+            build-essential \
+            cmake \
+            libeigen3-dev
 
-      - name: Configure
-        run: cmake -B build -S .
+      - name: Verify Toolchain
+        run: |
+          gcc --version
+          g++ --version
+          cmake --version
 
-      - name: Build
-        run: cmake --build build
+      - name: Verify Submodules
+        run: |
+          git submodule status
+
+      - name: Verify ur_rtde Exists
+        run: |
+          test -d third_party/ur_rtde
+
+      - name: Configure Project
+        run: |
+          cmake -B build -S . \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Project
+        run: |
+          cmake --build build --parallel
+
+      - name: Verify Build Artifacts
+        run: |
+          ls -la build
