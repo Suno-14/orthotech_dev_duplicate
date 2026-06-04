@@ -1,17 +1,14 @@
 #include <iostream>
 #include <calculations.hpp>
 #include <Eigen/Eigenvalues>
-<<<<<<< HEAD
-=======
 // #include <ur_rtde/rtde_control_interface.h>
 #include <ur_rtde/rtde_receive_interface.h>
 // #include <ur_rtde/rtde_io_interface.h>
->>>>>>> 6fe8166 (Added ur_rtde for windows and linux)
 
 using namespace std;
 using namespace Eigen;
 
-ur_rtde::RTDEReceiveInterface rtde_r;
+ur_rtde::RTDEReceiveInterface rtde_r("127.0.0.1");
 
 double Calculations::Addition(const double &n1, const double &n2)
     {return n1+n2;}
