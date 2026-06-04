@@ -66,13 +66,23 @@ jobs:
       - name: Install CMake (Windows)
         if: runner.os == 'Windows'
         uses: lukka/get-cmake@latest
-
+      
       - name: Install Boost via Chocolatey (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          choco install boost-msvc-14.3 --version=1.83.0 -y
-          echo "BOOST_ROOT=C:\local\boost_1_83_0" >> $env:GITHUB_ENV
+          choco install boost-msvc-14.3 -y
+          Get-ChildItem "C:\local\" 
+          $boostDir = Get-ChildItem "C:\local\" -Filter "boost*" | Select-Object -First 1
+          echo "BOOST_ROOT=C:\local\$($boostDir.Name)" >> $env:GITHUB_ENV
+          echo "Boost found at: C:\local\$($boostDir.Name)"
+
+      # - name: Install Boost via Chocolatey (Windows)
+      #   if: runner.os == 'Windows'
+      #   shell: pwsh
+      #   run: |
+      #     choco install boost-msvc-14.3 --version=1.83.0 -y
+      #     echo "BOOST_ROOT=C:\local\boost_1_83_0" >> $env:GITHUB_ENV
 
       - name: Setup vcpkg (Windows)
         if: runner.os == 'Windows'
