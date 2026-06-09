@@ -119,27 +119,21 @@ jobs:
         if: runner.os == 'Windows' && steps.cache-ur-rtde.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          $sourceDeps = python -c @"
-          import json
-          with open('windows-requirements.json') as f:
-              d = json.load(f)
-          print(' '.join(d['source']))
-          "@
-          if ($sourceDeps -match 'ur_rtde') {
-            git clone https://gitlab.com/sdurobotics/ur_rtde.git
-            cd ur_rtde
-            git submodule update --init --recursive
-            mkdir build
-            cd build
-            cmake .. `
-              -DCMAKE_BUILD_TYPE=Release `
-              -DPYTHON_BINDINGS:BOOL=OFF `
-              -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
-              -DVCPKG_TARGET_TRIPLET=x64-windows `
-              -DCMAKE_INSTALL_PREFIX="C:\ur_rtde_install"
-            cmake --build . --config Release
-            cmake --install . --config Release
-          }
+          git clone https://gitlab.com/sdurobotics/ur_rtde.git
+          cd ur_rtde
+          git submodule update --init --recursive
+          mkdir build
+          cd build
+          cmake .. `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DPYTHON_BINDINGS:BOOL=OFF `
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows `
+            -DCMAKE_PREFIX_PATH="${{ github.workspace }}\vcpkg\installed\x64-windows" `
+            -DCMAKE_INSTALL_PREFIX="C:\ur_rtde_install"
+          cmake --build . --config Release
+          cmake --install . --config Release
+
       - name: Verify Boost CMake config (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -153,7 +147,8 @@ jobs:
           cmake -S . -B build `
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -DVCPKG_TARGET_TRIPLET=x64-windows `
-            -DCMAKE_PREFIX_PATH="C:\ur_rtde_install"
+            -DCMAKE_PREFIX_PATH="${{ github.workspace }}\vcpkg\installed\x64-windows;C:\ur_rtde_install" `
+            --log-level=VERBOSE 2>&1
 
       # BUILD & RUN
 
