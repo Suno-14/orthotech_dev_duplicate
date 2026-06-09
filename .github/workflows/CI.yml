@@ -44,22 +44,14 @@ jobs:
       - name: Build and Install ur_rtde from Source (Linux)
         if: runner.os == 'Linux'
         run: |
-          SOURCE_DEPS=$(python3 -c "
-          import json
-          with open('linux-requirements.json') as f:
-              d = json.load(f)
-          print(' '.join(d['source']))
-          ")
-          if echo "$SOURCE_DEPS" | grep -q "ur_rtde"; then
-            git clone https://gitlab.com/sdurobotics/ur_rtde.git
-            cd ur_rtde
-            git submodule update --init --recursive
-            mkdir build && cd build
-            cmake .. -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDINGS:BOOL=OFF
-            make -j$(nproc)
-            sudo make install
-            sudo ldconfig
-          fi
+          git clone https://gitlab.com/sdurobotics/ur_rtde.git
+          cd ur_rtde
+          git submodule update --init --recursive
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DPYTHON_BINDINGS:BOOL=OFF
+          make -j$(nproc)
+          sudo make install
+          sudo ldconfig
 
       - name: Configure Project (Linux)
         if: runner.os == 'Linux'
@@ -89,9 +81,9 @@ jobs:
         id: cache-vcpkg
         with:
           path: vcpkg/installed
-          key: vcpkg-${{ hashFiles('windows-requirements.json') }}
+          key: vcpkg-x64-windows-${{ hashFiles('windows-requirements.json') }}
           restore-keys: |
-            vcpkg-
+            vcpkg-x64-windows-
 
       - name: Install vcpkg Dependencies (Windows)
         if: runner.os == 'Windows' && steps.cache-vcpkg.outputs.cache-hit != 'true'
@@ -134,12 +126,6 @@ jobs:
           cmake --build . --config Release
           cmake --install . --config Release
 
-      - name: Verify Boost CMake config (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Get-ChildItem -Recurse "${{ github.workspace }}\vcpkg\installed\x64-windows" -Filter "BoostConfig.cmake"
-
       - name: Configure Project (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -147,8 +133,7 @@ jobs:
           cmake -S . -B build `
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -DVCPKG_TARGET_TRIPLET=x64-windows `
-            -DCMAKE_PREFIX_PATH="${{ github.workspace }}\vcpkg\installed\x64-windows;C:\ur_rtde_install" `
-            --log-level=VERBOSE 2>&1
+            -DCMAKE_PREFIX_PATH="${{ github.workspace }}\vcpkg\installed\x64-windows;C:\ur_rtde_install"
 
       # BUILD & RUN
 
