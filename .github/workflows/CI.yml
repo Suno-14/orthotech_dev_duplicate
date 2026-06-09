@@ -27,19 +27,19 @@ jobs:
       - name: Generate Requirements
         run: python scripts/generate_requirements.py
 
-      # LINUX
+      # LINUX 
 
       - name: Install Linux Dependencies
         if: runner.os == 'Linux'
         run: |
-          PACKAGES=$(python3 -c "
-          import json
-          with open('linux-requirements.json') as f:
-              d = json.load(f)
-          print(' '.join(d['packages']))
-          ")
           sudo apt-get update
-          sudo apt-get install -y $PACKAGES
+          sudo apt-get install -y \
+            build-essential \
+            g++ \
+            make \
+            cmake \
+            libeigen3-dev \
+            libboost-all-dev
 
       - name: Build and Install ur_rtde from Source (Linux)
         if: runner.os == 'Linux'
@@ -57,7 +57,7 @@ jobs:
         if: runner.os == 'Linux'
         run: cmake -S . -B build
 
-      # WINDOWS
+      # WINDOWS 
 
       - name: Setup MSVC
         if: runner.os == 'Windows'
@@ -78,24 +78,18 @@ jobs:
       - name: Cache vcpkg packages (Windows)
         if: runner.os == 'Windows'
         uses: actions/cache@v4
-        id: cache-vcpkg
+        id: cache-eigen
         with:
           path: vcpkg/installed
-          key: vcpkg-x64-windows-${{ hashFiles('windows-requirements.json') }}
+          key: vcpkg-eigen3-boost-x64-windows-${{ hashFiles('config/dependencies.yml') }}
           restore-keys: |
-            vcpkg-x64-windows-
+            vcpkg-eigen3-boost-x64-windows-
 
-      - name: Install vcpkg Dependencies (Windows)
-        if: runner.os == 'Windows' && steps.cache-vcpkg.outputs.cache-hit != 'true'
+      - name: Install Eigen and Boost via vcpkg (Windows)
+        if: runner.os == 'Windows' && steps.cache-eigen.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          $packages = python -c @"
-          import json
-          with open('windows-requirements.json') as f:
-              d = json.load(f)
-          print(' '.join(f'{p}:x64-windows' for p in d['vcpkg']))
-          "@
-          Invoke-Expression ".\vcpkg\vcpkg.exe install $packages"
+          .\vcpkg\vcpkg.exe install eigen3:x64-windows boost:x64-windows
 
       - name: Cache ur_rtde install (Windows)
         if: runner.os == 'Windows'
@@ -103,7 +97,7 @@ jobs:
         id: cache-ur-rtde
         with:
           path: C:\ur_rtde_install
-          key: ur-rtde-x64-windows-${{ hashFiles('windows-requirements.json') }}
+          key: ur-rtde-x64-windows-${{ hashFiles('config/dependencies.yml') }}
           restore-keys: |
             ur-rtde-x64-windows-
 
@@ -121,7 +115,6 @@ jobs:
             -DPYTHON_BINDINGS:BOOL=OFF `
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -DVCPKG_TARGET_TRIPLET=x64-windows `
-            -DCMAKE_PREFIX_PATH="${{ github.workspace }}\vcpkg\installed\x64-windows" `
             -DCMAKE_INSTALL_PREFIX="C:\ur_rtde_install"
           cmake --build . --config Release
           cmake --install . --config Release
@@ -133,9 +126,9 @@ jobs:
           cmake -S . -B build `
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -DVCPKG_TARGET_TRIPLET=x64-windows `
-            -DCMAKE_PREFIX_PATH="${{ github.workspace }}\vcpkg\installed\x64-windows;C:\ur_rtde_install"
+            -DCMAKE_PREFIX_PATH="C:\ur_rtde_install"
 
-      # BUILD & RUN
+      # BUILD & RUN 
 
       - name: Build Project
         run: cmake --build build --config Release
@@ -157,3 +150,4 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: .\build\Release\main.exe
+        
