@@ -22,5 +22,5 @@ dependencies:
       - boost
 
 outputs:
-  linux: linux-requirements.txt
-  windows: windows-requirements.txt
+  linux: linux-requirements.json
+  windows: windows-requirements.json
