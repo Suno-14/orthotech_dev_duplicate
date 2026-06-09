@@ -1,4 +1,0 @@
-package:cmake
-package:cmake
-vcpkg:eigen3
-vcpkg:ur-rtde
