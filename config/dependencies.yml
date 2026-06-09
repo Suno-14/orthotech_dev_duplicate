@@ -13,14 +13,17 @@ dependencies:
       - g++
       - make
       - libeigen3-dev
+      - libboost-all-dev
     source:
       - ur_rtde
 
   windows:
+    source:
+      - ur_rtde
     vcpkg:
       - eigen3
       - boost
 
 outputs:
-  linux: linux-requirements.txt
-  windows: windows-requirements.txt
+  linux: linux-requirements.json
+  windows: windows-requirements.json
