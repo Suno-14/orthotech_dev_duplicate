@@ -34,7 +34,7 @@ jobs:
         run: |
           PACKAGES=$(python3 -c "
           import json
-          with open('requirements/linux-requirements.json') as f:
+          with open('linux-requirements.json') as f:
               d = json.load(f)
           print(' '.join(d['packages']))
           ")
@@ -46,7 +46,7 @@ jobs:
         run: |
           SOURCE_DEPS=$(python3 -c "
           import json
-          with open('requirements/linux-requirements.json') as f:
+          with open('linux-requirements.json') as f:
               d = json.load(f)
           print(' '.join(d['source']))
           ")
@@ -89,7 +89,7 @@ jobs:
         id: cache-vcpkg
         with:
           path: vcpkg/installed
-          key: vcpkg-${{ hashFiles('requirements/windows-requirements.json') }}
+          key: vcpkg-${{ hashFiles('windows-requirements.json') }}
           restore-keys: |
             vcpkg-
 
@@ -99,7 +99,7 @@ jobs:
         run: |
           $packages = python -c @"
           import json
-          with open('requirements/windows-requirements.json') as f:
+          with open('windows-requirements.json') as f:
               d = json.load(f)
           print(' '.join(f'{p}:x64-windows' for p in d['vcpkg']))
           "@
@@ -111,7 +111,7 @@ jobs:
         id: cache-ur-rtde
         with:
           path: C:\ur_rtde_install
-          key: ur-rtde-x64-windows-${{ hashFiles('requirements/windows-requirements.json') }}
+          key: ur-rtde-x64-windows-${{ hashFiles('windows-requirements.json') }}
           restore-keys: |
             ur-rtde-x64-windows-
 
@@ -121,7 +121,7 @@ jobs:
         run: |
           $sourceDeps = python -c @"
           import json
-          with open('requirements/windows-requirements.json') as f:
+          with open('windows-requirements.json') as f:
               d = json.load(f)
           print(' '.join(d['source']))
           "@
