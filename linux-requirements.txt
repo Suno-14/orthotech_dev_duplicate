@@ -1,6 +1,0 @@
-package:cmake
-package:build-essential
-package:g++
-package:make
-package:libeigen3-dev
-source:ur_rtde
