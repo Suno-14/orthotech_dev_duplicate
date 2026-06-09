@@ -19,7 +19,7 @@ dependencies:
 
   windows:
     source:
-      -ur-rtde
+      - ur_rtde
     vcpkg:
       - eigen3
       - boost
