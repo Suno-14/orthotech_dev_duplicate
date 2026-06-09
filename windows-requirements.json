@@ -1,0 +1,10 @@
+{
+  "packages": [
+    "cmake"
+  ],
+  "source": [],
+  "vcpkg": [
+    "eigen3",
+    "boost"
+  ]
+}

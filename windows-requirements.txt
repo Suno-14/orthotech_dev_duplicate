@@ -1,3 +1,0 @@
-package:cmake
-vcpkg:eigen3
-vcpkg:boost
