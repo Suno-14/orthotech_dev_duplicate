@@ -5,6 +5,7 @@ import json
 
 def main():
     repo_root = Path(__file__).resolve().parent.parent
+
     config_file = repo_root / "config" / "dependencies.yml"
 
     with open(config_file, "r", encoding="utf-8") as file:
@@ -35,12 +36,10 @@ def main():
         for dependency in cfg["dependencies"][platform].get("vcpkg", []):
             requirements["vcpkg"].append(dependency)
 
-        # Change output extension to .json
-        output_file = repo_root / Path(outputs[platform]).with_suffix(".json")
+        output_file = repo_root / outputs[platform]
 
         with open(output_file, "w", encoding="utf-8") as file:
             json.dump(requirements, file, indent=2)
-            file.write("\n")
 
         print(f"Generated: {output_file}")
 
