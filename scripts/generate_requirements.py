@@ -1,10 +1,10 @@
 from pathlib import Path
 import yaml
+import json
 
 
 def main():
     repo_root = Path(__file__).resolve().parent.parent
-
     config_file = repo_root / "config" / "dependencies.yml"
 
     with open(config_file, "r", encoding="utf-8") as file:
@@ -13,28 +13,33 @@ def main():
     outputs = cfg["outputs"]
 
     for platform in ["linux", "windows"]:
-        requirements = []
+        requirements = {
+            "packages": [],
+            "source": [],
+            "vcpkg": []
+        }
 
         # Common packages
         for package in cfg["dependencies"]["common"]["packages"]:
-            requirements.append(f"package:{package}")
+            requirements["packages"].append(package)
 
         # Platform packages
         for package in cfg["dependencies"][platform].get("packages", []):
-            requirements.append(f"package:{package}")
+            requirements["packages"].append(package)
 
         # Source dependencies
         for dependency in cfg["dependencies"][platform].get("source", []):
-            requirements.append(f"source:{dependency}")
+            requirements["source"].append(dependency)
 
         # vcpkg dependencies
         for dependency in cfg["dependencies"][platform].get("vcpkg", []):
-            requirements.append(f"vcpkg:{dependency}")
+            requirements["vcpkg"].append(dependency)
 
-        output_file = repo_root / outputs[platform]
+        # Change output extension to .json
+        output_file = repo_root / Path(outputs[platform]).with_suffix(".json")
 
         with open(output_file, "w", encoding="utf-8") as file:
-            file.write("\n".join(requirements))
+            json.dump(requirements, file, indent=2)
             file.write("\n")
 
         print(f"Generated: {output_file}")
