@@ -1,3 +1,19 @@
-package:cmake
-vcpkg:eigen3
-vcpkg:boost
+{
+  "packages": [
+    "cmake"
+  ],
+  "source": [
+    "-",
+    "u",
+    "r",
+    "-",
+    "r",
+    "t",
+    "d",
+    "e"
+  ],
+  "vcpkg": [
+    "eigen3",
+    "boost"
+  ]
+}
