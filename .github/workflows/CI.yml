@@ -8,8 +8,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            runner: self-hosted-linux
+          # - os: ubuntu-latest
+          #   runner: self-hosted-linux
           - os: windows-latest
             runner: self-hosted-windows
     runs-on: ${{ matrix.runner }}
