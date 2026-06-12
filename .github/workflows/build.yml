@@ -80,9 +80,21 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: false
+      
+      - name: Ensure PowerShell Core (pwsh) is Installed
+        shell: cmd
+        run: |
+          where pwsh >nul 2>nul
+          if %ERRORLEVEL% neq 0 (
+            echo "pwsh not found. Installing PowerShell Core via winget..."
+            winget install --id Microsoft.PowerShell --source winget --silent --accept-source-agreements --accept-package-agreements
+            echo "Installation triggered. Restarting runner environment path..."
+          ) else (
+            echo "PowerShell Core (pwsh) is already installed!"
+          )
 
       - name: Run Unified Toolchain Build & Test
-        shell: powershell
+        shell: pwsh
         run: |
 
           # 1. Force PowerShell to bypass execution blocks
