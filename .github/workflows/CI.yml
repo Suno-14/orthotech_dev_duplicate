@@ -7,10 +7,12 @@ jobs:
   build:
     strategy:
       matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-    runs-on: ${{ matrix.os }}
+        include:
+          - os: ubuntu-latest
+            runner: self-hosted-linux
+          - os: windows-latest
+            runner: self-hosted-windows
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout Repository
