@@ -105,11 +105,12 @@ $env:VCPKG_ROOT = $VcpkgDir
 Ok "vcpkg ready."
 
 # ── Step 4: vcpkg packages ────────────────────────────────────────────────────
-Header "Step 4 — vcpkg packages"
+Header "Step 3 — vcpkg packages"
+# 🌟 FIXED: Using literal Here-String piped directly into python standard input
 @'
 import json, subprocess, sys, os
 vcpkg_exe = os.path.join(os.environ['VCPKG_ROOT'], 'vcpkg.exe')
-with open(r'$ReqFile') as f:
+with open(r'C:\orthotech_dev\generated\windows-requirements.json') as f:
     data = json.load(f)
 pkgs = data.get('vcpkg', [])
 if not pkgs:
@@ -124,13 +125,15 @@ for p in pkgs:
     if r.returncode != 0:
         print(f'  [WARN] vcpkg install failed for {spec} — continuing.')
 '@ | python -
+if ($LASTEXITCODE -ne 0) { Err "vcpkg packages installation failed." }
 Ok "vcpkg packages done."
 
 # ── Step 5: pip packages ──────────────────────────────────────────────────────
-Header "Step 5 — pip packages"
+Header "Step 4 — pip packages"
+# 🌟 FIXED: Using literal Here-String piped directly into python standard input
 @'
 import json, subprocess, sys
-with open(r'$ReqFile') as f:
+with open(r'C:\orthotech_dev\generated\windows-requirements.json') as f:
     data = json.load(f)
 pkgs = data.get('pip', [])
 if not pkgs:
@@ -144,18 +147,20 @@ specs = [
 print(f"  Installing: {' '.join(specs)}")
 subprocess.run([sys.executable, '-m', 'pip', 'install'] + specs, check=True)
 '@ | python -
+if ($LASTEXITCODE -ne 0) { Err "pip packages installation failed." }
 Ok "pip packages done."
 
 # ── Step 6: source builds ─────────────────────────────────────────────────────
-Header "Step 6 — Source builds"
+Header "Step 5 — Source builds"
+# 🌟 FIXED: Using literal Here-String piped directly into python standard input
 @'
 import json, os, subprocess, sys, shlex
 from pathlib import Path
 
-install_prefix = Path(r'$InstallPrefix')
-source_cache   = Path(r'$SourceCache')
+install_prefix = Path(r'C:\orthotech_dev\deps')
+source_cache   = Path(r'C:\orthotech_dev\deps\src')
 
-with open(r'$ReqFile') as f:
+with open(r'C:\orthotech_dev\generated\windows-requirements.json') as f:
     data = json.load(f)
 
 deps = data.get('source', [])
@@ -214,77 +219,6 @@ for dep in deps:
 
 print(f'\n  All source deps installed to {install_prefix}')
 '@ | python -
-if ($LASTEXITCODE -ne 0) { Err "Source build failed." }
-Ok "Source builds done."
-
-# ── Step 6: source builds ─────────────────────────────────────────────────────
-Header "Step 5 — Source builds"
-python -c @"
-import json, os, subprocess, sys, shlex
-from pathlib import Path
-
-install_prefix = Path(r'$InstallPrefix')
-source_cache   = Path(r'$SourceCache')
-
-with open(r'$ReqFile') as f:
-    data = json.load(f)
-
-deps = data.get('source', [])
-if not deps:
-    print('  No source deps defined.')
-    sys.exit(0)
-
-cpu_count = str(os.cpu_count() or 4)
-
-for dep in deps:
-    name  = dep['name']
-    tag   = dep['tag']
-    stamp = source_cache / f'.{name}-{tag}.stamp'
-
-    if stamp.exists():
-        print(f'  [SKIP] {name}@{tag} already installed.')
-        continue
-
-    print(f'\n  [BUILD] {name}@{tag}')
-
-    src_dir = source_cache / name
-    if not src_dir.exists():
-        subprocess.run([
-            'git', 'clone', '--depth=1', '--branch', tag,
-            dep['repo'], str(src_dir)
-        ], check=True)
-
-    build_root = src_dir / (dep.get('build_dir') or '')
-    build_dir  = src_dir / '_build'
-    build_dir.mkdir(exist_ok=True)
-
-    cmake_extra = shlex.split(dep.get('cmake_args') or '')
-    subprocess.run([
-        'cmake', '-S', str(build_root), '-B', str(build_dir),
-        '-DCMAKE_BUILD_TYPE=Release',
-        f'-DCMAKE_INSTALL_PREFIX={install_prefix}',
-    ] + cmake_extra, check=True)
-
-    subprocess.run([
-        'cmake', '--build', str(build_dir),
-        '--config', 'Release',
-        '--parallel', cpu_count
-    ], check=True)
-
-    subprocess.run([
-        'cmake', '--install', str(build_dir), '--config', 'Release'
-    ], check=True)
-
-    post = dep.get('post_install', '').strip()
-    if post:
-        print(f'  [POST] {post}')
-        subprocess.run(post, shell=True, check=True)
-
-    stamp.touch()
-    print(f'  [OK] {name} installed to {install_prefix}')
-
-print(f'\n  All source deps installed to {install_prefix}')
-"@
 if ($LASTEXITCODE -ne 0) { Err "Source build failed." }
 Ok "Source builds done."
 
