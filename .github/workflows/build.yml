@@ -17,7 +17,7 @@ on:
         description: 'Run Linux build'
         required: true
         type: boolean
-        default: false
+        default: true
       enable_windows:
         description: 'Run Windows build'
         required: true
@@ -25,6 +25,7 @@ on:
         default: true
 env:
   CMAKE_BUILD_PARALLEL_LEVEL: 8 # Restricts 'cmake --build' to a maximum of 8 cores
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   NINJA_STATUS: "[%f/%t %e] "
 
 concurrency:
@@ -40,7 +41,7 @@ jobs:
     runs-on: [self-hosted, linux, orthotech]
     if: |
       github.event_name != 'workflow_dispatch' ||
-      inputs.enable_linux == true
+      (github.event_name == 'workflow_dispatch' && inputs.enable_linux == true)
     steps:
       - name: Checkout Code Base
         uses: actions/checkout@v4
@@ -48,7 +49,7 @@ jobs:
           submodules: false
 
       - name: Run Unified Toolchain Build & Test
-        run: python3 scripts/setup_all.py --skip-prereqs
+        run: python3 scripts/setup_all.py --skip-prereqs --skip-pull
 
       - name: Upload Linux Build Artifacts
         if: success()
@@ -83,7 +84,7 @@ jobs:
         shell: pwsh
         run: |
           Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-          python scripts/setup_all.py --skip-prereqs
+          python scripts/setup_all.py --skip-prereqs --skip-pull
 
       - name: Upload Windows Build Artifacts
         if: success()
