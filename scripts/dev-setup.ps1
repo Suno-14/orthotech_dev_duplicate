@@ -106,7 +106,7 @@ Ok "vcpkg ready."
 
 # ── Step 4: vcpkg packages ────────────────────────────────────────────────────
 Header "Step 3 — vcpkg packages"
-python - @"
+python -c @"
 import json, subprocess, sys, os
 vcpkg_exe = os.path.join(os.environ['VCPKG_ROOT'], 'vcpkg.exe')
 with open(r'$ReqFile') as f:
@@ -128,7 +128,7 @@ Ok "vcpkg packages done."
 
 # ── Step 5: pip packages ──────────────────────────────────────────────────────
 Header "Step 4 — pip packages"
-python - @"
+python -c @"
 import json, subprocess, sys
 with open(r'$ReqFile') as f:
     data = json.load(f)
@@ -148,7 +148,7 @@ Ok "pip packages done."
 
 # ── Step 6: source builds ─────────────────────────────────────────────────────
 Header "Step 5 — Source builds"
-python - @"
+python -c @"
 import json, os, subprocess, sys, shlex
 from pathlib import Path
 
