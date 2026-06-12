@@ -79,10 +79,15 @@ jobs:
 
       # BOOTSTRAP: Forces the runner to look inside your exact Python 3.11 directories
       - name: Bootstrap Environment Paths
-        shell: powershell {0} -ExecutionPolicy Bypass
+        shell: cmd
         run: |
-          echo "$env:USERPROFILE\AppData\Local\Programs\Python\Python311\" >> $env:GITHUB_PATH
-          echo "$env:USERPROFILE\AppData\Local\Programs\Python\Python311\Scripts\" >> $env:GITHUB_PATH
+          if exist "%USERPROFILE%\AppData\Local\Programs\Python\Python311\" (
+            echo %USERPROFILE%\AppData\Local\Programs\Python\Python311\>> %GITHUB_PATH%
+            echo %USERPROFILE%\AppData\Local\Programs\Python\Python311\Scripts\>> %GITHUB_PATH%
+          ) else (
+            echo "C:\Program Files\Python311\">> %GITHUB_PATH%
+            echo "C:\Program Files\Python311\Scripts\">> %GITHUB_PATH%
+          )
 
       # UNIFIED PIPELINE: Calls your setup toolchain completely using pwsh
       - name: Run Unified Toolchain Build & Test
