@@ -203,7 +203,7 @@ def main():
     )
     parser.add_argument(
         "--config",
-        default=str(SCRIPT_DIR / "dependencies.yml"),
+        default=str(SCRIPT_DIR / "../config/dependencies.yml"),
         help="Path to dependencies.yml (default: config/dependencies.yml)",
     )
     parser.add_argument(
