@@ -82,7 +82,7 @@ jobs:
           submodules: false
 
       - name: Run Unified Toolchain Build & Test
-        shell: pwsh
+        shell: powershell
         run: |
 
           # 1. Force PowerShell to bypass execution blocks
