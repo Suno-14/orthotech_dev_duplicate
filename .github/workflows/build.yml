@@ -84,8 +84,16 @@ jobs:
       - name: Run Unified Toolchain Build & Test
         shell: pwsh
         run: |
+
+          # 1. Force PowerShell to bypass execution blocks
           Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+          
+          # 2. Check if python is actually available on this Windows machine
+          Get-Command python, python3 -ErrorAction SilentlyContinue | Select-Object Name, Source
+          
+          # 3. Run your setup script and force errors to surface immediately
           python scripts/setup_all.py --skip-prereqs --skip-pull
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload Windows Build Artifacts
         if: success()
