@@ -223,7 +223,7 @@ if ($Build) {
     cmake --preset windows-release `
         "-DCMAKE_PREFIX_PATH=$InstallPrefix" `
         "-DCMAKE_TOOLCHAIN_FILE=$VcpkgDir\scripts\buildsystems\vcpkg.cmake"
-    cmake --build $BuildDir --config Release --parallel
+    cmake --build $BuildDir --config Release --parallel 8
     if ($LASTEXITCODE -ne 0) { Err "Project build failed." }
     Ok "Project built."
 }

@@ -23,10 +23,13 @@ on:
         required: true
         type: boolean
         default: true
+  env:
+    CMAKE_BUILD_PARALLEL_LEVEL: 8 # Restricts 'cmake --build' to a maximum of 8 cores
+    NINJA_STATUS: "[%f/%t %e] "
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   # ----------------------------------------------------------------------------

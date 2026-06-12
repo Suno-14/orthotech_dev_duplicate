@@ -210,14 +210,14 @@ if [[ "$DO_BUILD" == "true" ]]; then
   header "Step 5 — Build project"
   cmake --preset linux-release \
     -DCMAKE_PREFIX_PATH="${INSTALL_PREFIX}"
-  cmake --build "${BUILD_DIR}" --config Release --parallel "$(nproc)"
+  cmake --build "${BUILD_DIR}" --config Release --parallel 8
   ok "Project built."
 fi
 
 # ── Step 7: optional tests ────────────────────────────────────────────────────
 if [[ "$DO_TEST" == "true" ]]; then
   header "Step 6 — Tests"
-  ctest --test-dir "${BUILD_DIR}" --output-on-failure --parallel "$(nproc)"
+  ctest --test-dir "${BUILD_DIR}" --output-on-failure --parallel 8
   ok "Tests passed."
 fi
 
