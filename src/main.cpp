@@ -5,7 +5,7 @@ int main()
 {
     Calculations calc;
 
-    std::cout << calc.Addition(3, 2) << std::endl;
+    std::cout << calc.Addition(5, 3) << std::endl;
 
     return 0;
 }
