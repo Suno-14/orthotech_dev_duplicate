@@ -2,7 +2,7 @@
   "version": 3,
   "configurePresets": [
     {
-      "name": "windows-default",
+      "name": "windows-release",
       "displayName": "Windows Release",
       "generator": "Visual Studio 17 2022",
       "architecture": "x64",
@@ -12,7 +12,7 @@
       }
     },
     {
-      "name": "linux-default",
+      "name": "linux-release",
       "displayName": "Linux Release",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/linux",
