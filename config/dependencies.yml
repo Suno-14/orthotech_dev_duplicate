@@ -1,29 +1,133 @@
+# ==============================================================================
+# dependencies.yml — Canonical dependency manifest
+# Project: orthotech_dev
+# ==============================================================================
+#
+# DEPENDENCY TYPES:
+#
+#   packages  → system package manager
+#               Linux  : apt-get install <name>
+#               Windows: (not used — use vcpkg or source instead)
+#
+#   vcpkg     → vcpkg package manager (Windows primarily, some Linux too)
+#               Windows: vcpkg install <name>:<triplet>
+#               Linux  : vcpkg install <name>:<triplet>  (optional, if preferred over apt)
+#
+#   source    → clone from git and build with CMake
+#               used when: dep not in apt/vcpkg, version too old, needs custom flags
+#
+#   pip       → Python packages, cross-platform via pip
+#
+# SOURCE ENTRY FIELDS:
+#   name        : identifier used in logs and cache keys
+#   repo        : git clone URL
+#   tag         : git tag or branch (pinned for reproducibility)
+#   cmake_args  : extra CMake -D flags (optional)
+#   build_dir   : subdir to run cmake from, if not repo root (optional)
+#   post_install: shell command to run after cmake --install (optional)
+#
+# PLATFORM OVERRIDE:
+#   Any dep under "common" can be overridden per platform by redefining it
+#   under "linux" or "windows" with the same name.
+#   Platform-specific entries always win over common.
+#
+# ==============================================================================
+
 project:
-  name: orthotech_dev_duplicate
+  name: orthotech_dev
   cpp_standard: 17
+  python: "3.11"
 
+# ------------------------------------------------------------------------------
+# Output file paths (relative to repo root)
+# ------------------------------------------------------------------------------
+outputs:
+  linux:   generated/linux-requirements.json
+  windows: generated/windows-requirements.json
+
+# ------------------------------------------------------------------------------
+# Dependencies
+# ------------------------------------------------------------------------------
 dependencies:
-  common:
-    packages:
-      - cmake
 
-  linux:
+  # ── Common (both platforms) ─────────────────────────────────────────────────
+  common:
+
     packages:
+      # Build tools — override per platform below if names differ
+      - cmake
+      - ninja-build
+
+    pip:
+      # Python tooling used across the project
+      - name: pyyaml
+        version: "6.0.1"
+
+      - name: numpy
+        version: "1.26.4"
+
+      - name: requests
+        version: "2.31.0"
+
+  # ── Linux ───────────────────────────────────────────────────────────────────
+  linux:
+
+    packages:
+      # Compiler & build essentials
       - build-essential
       - g++
       - make
+      - pkg-config
+      - git
+
+      # Common robotics/math libs available in apt at good enough versions
       - libeigen3-dev
       - libboost-all-dev
-    source:
-      - ur_rtde
+      - libopencv-dev
+      - libasio-dev
 
+      # System utilities deps need
+      - libssl-dev
+      - libcurl4-openssl-dev
+      - zlib1g-dev
+
+    source:
+      # ── Example: simple source build ──────────────────────────────────────
+      - name: ur_rtde
+        repo: https://gitlab.com/sdurobotics/ur_rtde.git
+        tag: v1.5.5
+        cmake_args: >-
+          -DPYTHON_BINDINGS=OFF
+          -DRTDE_BUILD_EXAMPLES=OFF
+
+  # ── Windows ─────────────────────────────────────────────────────────────────
   windows:
-    source:
-      - ur_rtde
-    vcpkg:
-      - eigen3
-      - boost
 
-outputs:
-  linux: linux-requirements.json
-  windows: windows-requirements.json
+    vcpkg:
+      # Well-maintained in vcpkg — prefer this over source on Windows
+      - name: eigen3
+        triplet: x64-windows   # x64-windows | x64-windows-static
+
+      - name: boost
+        triplet: x64-windows
+
+      - name: opencv
+        triplet: x64-windows
+
+      - name: openssl
+        triplet: x64-windows
+
+      - name: zlib
+        triplet: x64-windows
+
+      - name: curl
+        triplet: x64-windows
+
+    source:
+      # Same source deps as Linux — built natively on Windows with MSVC/MinGW
+      - name: ur_rtde
+        repo: https://gitlab.com/sdurobotics/ur_rtde.git
+        tag: v1.5.5
+        cmake_args: >-
+          -DPYTHON_BINDINGS=OFF
+          -DRTDE_BUILD_EXAMPLES=OFF
