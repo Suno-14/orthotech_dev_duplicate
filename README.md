@@ -26,12 +26,19 @@ The toolchain operates as a three-stage pipeline to establish identical develope
 When configuring a fresh developer workstation or onboarding a new engineer, you can run the entire sequence using the master Python helper script.
 
 ### On Windows 11
-Open **PowerShell as an Administrator** in the root directory and execute:
+#### 1. One-Time Prerequisites Setup (Admin)
+Before running the project for the first time, open **PowerShell as an Administrator** in the root directory and run the initialization script to install Git, CMake, PowerShell Core (`pwsh`), and Python 3.11:
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-python scripts/setup_all.py
+.\scripts\install-prerequisites.ps1
 ```
+#### 2. Fix the Windows Python Path Conflict
+Windows 11 includes pre-installed, empty Python shortcuts (`WindowsApps`) that override your real installation and redirect you to the Microsoft Store. 
 
+To fix this for your current PowerShell session instantly, copy and paste this command:
+```powershell
+$env:PATH = "$env:USERPROFILE\AppData\Local\Programs\Python\Python311\;$env:USERPROFILE\AppData\Local\Programs\Python\Python311\Scripts\;" + $env:PATH
+```
 ### On Linux (Ubuntu) 
 
 ```bash

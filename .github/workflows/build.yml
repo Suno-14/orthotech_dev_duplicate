@@ -82,11 +82,11 @@ jobs:
         shell: cmd
         run: |
           if exist "%USERPROFILE%\AppData\Local\Programs\Python\Python311\" (
-            echo %USERPROFILE%\AppData\Local\Programs\Python\Python311\>> %GITHUB_PATH%
-            echo %USERPROFILE%\AppData\Local\Programs\Python\Python311\Scripts\>> %GITHUB_PATH%
+            echo %USERPROFILE%\AppData\Local\Programs\Python\Python311\>> "%GITHUB_PATH%"
+            echo %USERPROFILE%\AppData\Local\Programs\Python\Python311\Scripts\>> "%GITHUB_PATH%"
           ) else (
-            echo "C:\Program Files\Python311\">> %GITHUB_PATH%
-            echo "C:\Program Files\Python311\Scripts\">> %GITHUB_PATH%
+            echo C:\Program Files\Python311\>> "%GITHUB_PATH%"
+            echo C:\Program Files\Python311\Scripts\>> "%GITHUB_PATH%"
           )
 
       # UNIFIED PIPELINE: Calls your setup toolchain completely using pwsh
