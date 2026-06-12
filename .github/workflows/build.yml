@@ -92,6 +92,15 @@ jobs:
           ) else (
             echo "PowerShell Core (pwsh) is already installed!"
           )
+            
+      - name: Ensure Real Python is Installed
+        shell: cmd
+        run: |
+          echo "Installing Python 3.12 via winget..."
+          winget install --id Python.Python.3.12 --source winget --silent --accept-source-agreements --accept-package-agreements
+          
+          # This line forces Windows to refresh its environment variables immediately for this session
+          refreshenv >nul 2>nul
 
       - name: Run Unified Toolchain Build & Test
         shell: pwsh
