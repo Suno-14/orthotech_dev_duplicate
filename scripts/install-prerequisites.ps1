@@ -63,6 +63,14 @@ if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
 }
 Ok "winget available."
 
+# ── Step 0: PowerShell Core (pwsh) ──────────────────────────────────────
+Header "Step 0 — PowerShell Core"
+if (-not (Get-Command pwsh -ErrorAction SilentlyContinue)) {
+    Install-WinGet "Microsoft.PowerShell" "PowerShell Core"
+} else {
+    Ok "PowerShell Core (pwsh) is already installed."
+}
+
 # ── Step 1: Git ───────────────────────────────────────────────────────────────
 Header "Step 1 — Git"
 Install-WinGet "Git.Git" "Git"

@@ -70,47 +70,24 @@ jobs:
     runs-on: [self-hosted, windows, orthotech]
     if: |
       github.event_name != 'workflow_dispatch' ||
-      (github.event_name == 'workflow_dispatch' && inputs.enable_windows == true) ||
-      (
-        github.event_name == 'workflow_dispatch' &&
-        inputs.enable_windows == true
-      )
+      (github.event_name == 'workflow_dispatch' && inputs.enable_windows == true)
     steps:
       - name: Checkout Code Base
         uses: actions/checkout@v4
         with:
           submodules: false
-      
-      - name: Ensure PowerShell Core (pwsh) is Installed
-        shell: cmd
-        run: |
-          where pwsh >nul 2>nul
-          if %ERRORLEVEL% neq 0 (
-            echo "pwsh not found. Installing PowerShell Core via winget..."
-            winget install --id Microsoft.PowerShell --source winget --silent --accept-source-agreements --accept-package-agreements
-            echo "Installation triggered. Restarting runner environment path..."
-          ) else (
-            echo "PowerShell Core (pwsh) is already installed!"
-          )
 
-      - name: Ensure Real Python is Installed
-        shell: cmd
+      # BOOTSTRAP: Forces the runner to look inside your exact Python 3.11 directories
+      - name: Bootstrap Environment Paths
+        shell: powershell {0} -ExecutionPolicy Bypass
         run: |
-            echo "Installing Python 3.12 via winget..."
-            winget install --id Python.Python.3.12 --source winget --silent --accept-source-agreements --accept-package-agreements          
-            refreshenv >nul 2>nul
+          echo "$env:USERPROFILE\AppData\Local\Programs\Python\Python311\" >> $env:GITHUB_PATH
+          echo "$env:USERPROFILE\AppData\Local\Programs\Python\Python311\Scripts\" >> $env:GITHUB_PATH
 
+      # UNIFIED PIPELINE: Calls your setup toolchain completely using pwsh
       - name: Run Unified Toolchain Build & Test
         shell: pwsh
         run: |
-
-          # 1. Force PowerShell to bypass execution blocks
-          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-          
-          # 2. Check if python is actually available on this Windows machine
-          Get-Command python, python3 -ErrorAction SilentlyContinue | Select-Object Name, Source
-          
-          # 3. Run your setup script and force errors to surface immediately
           python scripts/setup_all.py --skip-prereqs --skip-pull
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
