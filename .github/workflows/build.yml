@@ -78,16 +78,12 @@ jobs:
           submodules: false
 
       # BOOTSTRAP: Forces the runner to look inside your exact Python 3.11 directories
-      - name: Bootstrap Environment Paths
-        shell: cmd
-        run: |
-          if exist "%USERPROFILE%\AppData\Local\Programs\Python\Python311\" (
-            echo %USERPROFILE%\AppData\Local\Programs\Python\Python311\>> "%GITHUB_PATH%"
-            echo %USERPROFILE%\AppData\Local\Programs\Python\Python311\Scripts\>> "%GITHUB_PATH%"
-          ) else (
-            echo C:\Program Files\Python311\>> "%GITHUB_PATH%"
-            echo C:\Program Files\Python311\Scripts\>> "%GITHUB_PATH%"
-          )
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          # Optional: cache your pip dependencies to make builds lightning-fast
+          cache: 'pip'
 
       # UNIFIED PIPELINE: Calls your setup toolchain completely using pwsh
       - name: Run Unified Toolchain Build & Test
