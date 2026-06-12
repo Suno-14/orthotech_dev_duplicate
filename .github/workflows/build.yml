@@ -1,6 +1,7 @@
 # ==============================================================================
 # .github/workflows/build.yml
 # Triggers on every push to every branch + all pull requests
+# Manual trigger allows selectively running Linux, Windows, or both
 # ==============================================================================
 
 name: CI Build
@@ -10,93 +11,44 @@ on:
     branches: ["**"]
   pull_request:
     branches: ["**"]
-
   workflow_dispatch:
-      inputs:
-        enable_linux:
-          description: 'Run Linux Server Build'
-          required: true
-          type: boolean
-          default: false
-        enable_windows:
-          description: 'Run Windows Server Build'
-          required: true
-          type: boolean
-          default: true
+    inputs:
+      enable_linux:
+        description: 'Run Linux build'
+        required: true
+        type: boolean
+        default: false
+      enable_windows:
+        description: 'Run Windows build'
+        required: true
+        type: boolean
+        default: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  BUILD_TYPE:     Release
-  PYTHON_VERSION: "3.11"
-  VCPKG_COMMIT:   "2024.04.26"
-  LINUX_PREFIX:   /opt/orthotech_dev
-  WINDOWS_PREFIX: C:\orthotech_dev\deps
-  VCPKG_DIR:      C:\orthotech_dev\vcpkg
-
-# ------------------------------------------------------------------------------
-# Job 1: Generate requirements (once, shared as artifact)
-# ------------------------------------------------------------------------------
 jobs:
-  generate:
-    name: Generate Requirements
-    runs-on: [self-hosted, linux, orthotech]
-
-    outputs:
-      linux-hash:   ${{ steps.hash.outputs.linux }}
-      windows-hash: ${{ steps.hash.outputs.windows }}
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-
-      - name: Install pyyaml
-        run: pip install pyyaml
-
-      - name: Generate requirements
-        run: python config/generate_requirements.py --validate
-
-      - name: Hash requirement files (for cache keys)
-        id: hash
-        run: |
-          echo "linux=$(sha256sum generated/linux-requirements.json | cut -d' ' -f1)"     >> "$GITHUB_OUTPUT"
-          echo "windows=$(sha256sum generated/windows-requirements.json | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
-
-      - name: Upload requirements
-        uses: actions/upload-artifact@v4
-        with:
-          name: requirements
-          path: generated/
-          retention-days: 3
-
   # ----------------------------------------------------------------------------
-  # Job 2: Linux build
+  # Linux Server Build Pipeline
   # ----------------------------------------------------------------------------
   build-linux:
     name: Build — Linux
     runs-on: [self-hosted, linux, orthotech]
-    needs: generate
-
+    if: |
+      github.event_name != 'workflow_dispatch' ||
+      inputs.enable_linux == true
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code Base
+        uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: false
 
-      # Call your script directly! It handles caching via the stamp files naturally.
-      - name: Run Environment Setup & Project Build
-        run: |
-          chmod +x scripts/dev-setup.sh
-          ./scripts/dev-setup.sh --build --test
+      - name: Run Unified Toolchain Build & Test
+        run: python3 scripts/setup_all.py --skip-prereqs
 
-      - name: Upload Linux build
+      - name: Upload Linux Build Artifacts
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: build-linux
@@ -104,196 +56,36 @@ jobs:
           retention-days: 7
 
   # ----------------------------------------------------------------------------
-  # Job 3: Windows build
-  # Runs on local server — only on main and release/* branches
-  # (avoids burning free minutes on every feature branch push)
+  # Windows Server Build Pipeline
   # ----------------------------------------------------------------------------
   build-windows:
     name: Build — Windows
     runs-on: [self-hosted, windows, orthotech]
-    needs: generate
-
+    if: |
+      (
+        github.event_name != 'workflow_dispatch' &&
+        (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/'))
+      ) ||
+      (
+        github.event_name == 'workflow_dispatch' &&
+        inputs.enable_windows == true
+      )
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Download requirements
-        uses: actions/download-artifact@v4
+      - name: Checkout Code Base
+        uses: actions/checkout@v4
         with:
-          name: requirements
-          path: generated/
+          submodules: false
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-
-      # ── Bootstrap vcpkg ─────────────────────────────────────────────────────
-      - name: Bootstrap vcpkg
+      - name: Run Unified Toolchain Build & Test
         shell: pwsh
         run: |
-          if (-not (Test-Path "$env:VCPKG_DIR")) {
-            git clone https://github.com/microsoft/vcpkg.git "$env:VCPKG_DIR"
-          }
-          Push-Location "$env:VCPKG_DIR"
-            git fetch --depth=1 origin $env:VCPKG_COMMIT 2>$null
-            git checkout $env:VCPKG_COMMIT
-            if (-not (Test-Path "$env:VCPKG_DIR\vcpkg.exe")) {
-              .\bootstrap-vcpkg.bat -disableMetrics
-            }
-          Pop-Location
+          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+          python scripts/setup_all.py --skip-prereqs
 
-      # ── Cache: vcpkg installed ───────────────────────────────────────────────
-      - name: Cache vcpkg packages
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.VCPKG_DIR }}\installed
-          key: vcpkg-${{ needs.generate.outputs.windows-hash }}
-          restore-keys: vcpkg-
-
-      # ── Cache: source build install prefix ──────────────────────────────────
-      - name: Cache source builds
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.WINDOWS_PREFIX }}
-          key: source-windows-${{ needs.generate.outputs.windows-hash }}
-          restore-keys: source-windows-
-
-      # ── vcpkg packages ──────────────────────────────────────────────────────
-      - name: Install vcpkg packages
-        shell: pwsh
-        run: |
-          python - @"
-          import json, subprocess, sys, os
-          vcpkg = os.path.join(os.environ['VCPKG_DIR'], 'vcpkg.exe')
-          with open('generated/windows-requirements.json') as f:
-              data = json.load(f)
-          for p in data.get('vcpkg', []):
-              spec = f"{p['name']}:{p.get('triplet','x64-windows')}"
-              print(f'  vcpkg install {spec}')
-              subprocess.run([vcpkg, 'install', spec], check=True)
-          "@
-        env:
-          VCPKG_DIR: ${{ env.VCPKG_DIR }}
-
-      # ── pip packages ────────────────────────────────────────────────────────
-      - name: Install pip packages
-        shell: pwsh
-        run: |
-          python - @"
-          import json, subprocess, sys
-          with open('generated/windows-requirements.json') as f:
-              data = json.load(f)
-          specs = [
-              f"{p['name']}=={p['version']}" if p.get('version') and p['version'] != 'latest'
-              else p['name']
-              for p in data.get('pip', [])
-          ]
-          if specs:
-              subprocess.run([sys.executable,'-m','pip','install'] + specs, check=True)
-          "@
-
-      # ── source builds ───────────────────────────────────────────────────────
-      - name: Build source dependencies
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path "$env:WINDOWS_PREFIX\src" | Out-Null
-          python - @"
-          import json, os, subprocess, sys, shlex
-          from pathlib import Path
-
-          prefix = Path(os.environ['WINDOWS_PREFIX'])
-          cache  = prefix / 'src'
-
-          with open('generated/windows-requirements.json') as f:
-              data = json.load(f)
-
-          for dep in data.get('source', []):
-              name  = dep['name']
-              tag   = dep['tag']
-              stamp = cache / f'.{name}-{tag}.stamp'
-              if stamp.exists():
-                  print(f'[SKIP] {name}@{tag}')
-                  continue
-              print(f'\n[BUILD] {name}@{tag}')
-              src = cache / name
-              if not src.exists():
-                  subprocess.run(['git','clone','--depth=1','--branch',tag,
-                                  dep['repo'],str(src)], check=True)
-              build_root = src / (dep.get('build_dir') or '')
-              bdir = src / '_build'
-              bdir.mkdir(exist_ok=True)
-              extra = shlex.split(dep.get('cmake_args') or '')
-              subprocess.run([
-                  'cmake','-S',str(build_root),'-B',str(bdir),
-                  '-DCMAKE_BUILD_TYPE=Release',
-                  f'-DCMAKE_INSTALL_PREFIX={prefix}'
-              ] + extra, check=True)
-              subprocess.run(['cmake','--build',str(bdir),
-                              '--config','Release',
-                              '--parallel',str(os.cpu_count())], check=True)
-              subprocess.run(['cmake','--install',str(bdir),
-                              '--config','Release'], check=True)
-              post = dep.get('post_install','').strip()
-              if post:
-                  subprocess.run(post, shell=True, check=True)
-              stamp.touch()
-              print(f'[OK] {name}')
-          "@
-        env:
-          WINDOWS_PREFIX: ${{ env.WINDOWS_PREFIX }}
-
-      # ── build project ───────────────────────────────────────────────────────
-      - name: Configure project
-        shell: pwsh
-        run: |
-          cmake --preset windows-release `
-            "-DCMAKE_PREFIX_PATH=$env:WINDOWS_PREFIX" `
-            "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_DIR\scripts\buildsystems\vcpkg.cmake"
-        env:
-          WINDOWS_PREFIX: ${{ env.WINDOWS_PREFIX }}
-          VCPKG_DIR:      ${{ env.VCPKG_DIR }}
-
-      - name: Build project
-        run: cmake --build build --config Release --parallel
-
-      - name: Run tests
-        run: ctest --test-dir build --build-config Release --output-on-failure --parallel 4
-
-      - name: Upload Windows build
+      - name: Upload Windows Build Artifacts
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: build-windows
           path: build/
           retention-days: 7
-
-  # ----------------------------------------------------------------------------
-  # Job 4: Summary gate
-  # ----------------------------------------------------------------------------
-  summary:
-    name: Summary
-    runs-on: [self-hosted, linux, orthotech]
-    needs: [build-linux, build-windows]
-    if: always()
-    steps:
-      - name: Check results
-        run: |
-          echo "Linux  : ${{ needs.build-linux.result }}"
-          echo "Windows: ${{ needs.build-windows.result }}"
-
-          # Linux must always pass
-          if [[ "${{ needs.build-linux.result }}" != "success" ]]; then
-            echo "Linux build FAILED."
-            exit 1
-          fi
-
-          # Windows is skipped on non-main branches — expected and OK
-          if [[ "${{ needs.build-windows.result }}" == "failure" ]]; then
-            echo "Windows build FAILED."
-            exit 1
-          elif [[ "${{ needs.build-windows.result }}" == "skipped" ]]; then
-            echo "Windows build skipped (non-main branch) — OK."
-          else
-            echo "Windows build passed."
-          fi
-
-          echo "All required builds passed."

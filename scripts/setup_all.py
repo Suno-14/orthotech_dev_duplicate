@@ -3,11 +3,12 @@ import sys
 import os
 import platform
 import subprocess
-import argparse # <-- Added for flag handling
+import argparse
 import json
 from pathlib import Path
 
 def is_admin():
+    """Checks for Administrator / Root permissions."""
     try:
         if platform.system() == "Windows":
             import ctypes
@@ -18,10 +19,11 @@ def is_admin():
         return False
 
 def run_script(cmd, shell=False):
-    print(f"Running: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
+    """Executes a terminal or shell script cleanly."""
+    print(f"\n Running: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
     result = subprocess.run(cmd, shell=shell)
     if result.returncode != 0:
-        print(f"Error: Command failed with exit code {result.returncode}")
+        print(f" Error: Command failed with exit code {result.returncode}")
         sys.exit(result.returncode)
 
 def update_submodules():
@@ -50,8 +52,10 @@ def update_submodules():
             # Standardize path string for both Windows and Linux environments
             normalized_path = os.path.normpath(sub_path)
             
-            if not os.path.exists(normalized_path):
-                print(f" [GIT] Submodule folder '{normalized_path}' not present locally. Syncing...")
+            # DEFENSIVE GUARD: Skip the root repo tracking if it is named "Software" or "."
+            if sub_path.lower() == "software" or normalized_path == ".":
+                print("  [GIT] Skipping root repository pointer ('Software')")
+                continue
 
             print(f" [GIT] Configuring tracking: {normalized_path} ➔ branch: [{branch_name}]")
             
@@ -72,57 +76,73 @@ def update_submodules():
             "--merge"     # Merges updates directly down into local workspace states
         ], check=True)
         
-        print(" [GIT] All submodules successfully updated to their mapped branches!")
+        print("[GIT] All submodules successfully updated to their mapped branches!")
         
     except subprocess.CalledProcessError as e:
         print(f" Error updating branch-mapped submodules: {e}")
         sys.exit(1)
 
 def main():
-    # Parse the incoming automation flags
-    parser = argparse.ArgumentParser(description="Unified Orthotech Setup Toolchain")
+    parser = argparse.ArgumentParser(description="Unified Orthotech Setup & Management Toolchain")
     parser.add_argument("--skip-prereqs", action="store_true", help="Skip system prerequisites check/install")
     parser.add_argument("--skip-pull", action="store_true", help="Skip pulling/updating recursive Git submodules")
+    
+    # Platform Overrides
+    parser.add_argument("--windows", action="store_true", help="Force target execution configuration for Windows")
+    parser.add_argument("--linux", action="store_true", help="Force target execution configuration for Linux")
+    
     args = parser.parse_args()
 
-    os_type = platform.system()
-    print(f"Starting Setup Toolchain on {os_type}...")
-
-    # 1. Enforce Admin privileges ONLY if we are NOT skipping prerequisites
-    if not args.skip_prereqs and not is_admin():
-        if os_type == "Windows":
-            print("Error: You must run this script from an Administrator PowerShell prompt.")
-        else:
-            print("Error: You must run this script with sudo (e.g., sudo python3 setup_all.py).")
+    # Determine execution platform target
+    if args.windows and args.linux:
+        print(" Error: You cannot specify both --windows and --linux simultaneously.")
         sys.exit(1)
+    elif args.windows:
+        target_os = "Windows"
+        print(" Platform Overridden: Forcing execution target to Windows.")
+    elif args.linux:
+        target_os = "Linux"
+        print(" Platform Overridden: Forcing execution target to Linux.")
+    else:
+        # Fallback to automatic runtime detection if no override flag is present
+        target_os = platform.system()
 
-    # 2. Update Git submodules if not skipped
+    print(f" Starting Orthotech Master Toolchain for target environment: {target_os}...")
+
+    # Step 1: Manage Git Submodules (skipped in Actions via --skip-pull)
     if not args.skip_pull:
         update_submodules()
     else:
         print("\n Skipping Git submodule pull step (handled by caller environment).")
 
-    # 3. Execute Steps based on Operating System
-    if os_type == "Windows":
+    # Step 2: Enforce Admin privileges ONLY if installing system prerequisites
+    if not args.skip_prereqs and not is_admin():
+        if target_os == "Windows":
+            print(" Error: You must run this script from an Administrator PowerShell prompt.")
+        else:
+            print(" Error: You must run this script with sudo (e.g., sudo python3 setup_all.py).")
+        sys.exit(1)
+
+    # Step 3: Run Setup Scripts based on Chosen Target Platform
+    if target_os == "Windows":
         if not args.skip_prereqs:
             run_script(["powershell", "-ExecutionPolicy", "Bypass", "-File", "scripts/install-prerequisites.ps1"])
         
-        print("\n Running local project setup...")
-        # Your pipeline uses -Build -Test flags natively
+        print("\n Processing Windows build configuration...")
         run_script(["powershell", "-ExecutionPolicy", "Bypass", "-File", "scripts/dev-setup.ps1", "-Build", "-Test"])
 
-    elif os_type == "Linux":
+    elif target_os == "Linux":
         if not args.skip_prereqs:
             run_script(["bash", "scripts/install-prerequisites.sh"])
         
-        print("\n Running local project setup...")
+        print("\n Processing Linux build configuration...")
         run_script(["bash", "scripts/dev-setup.sh", "--build", "--test"])
 
     else:
-        print(f" Unsupported OS: {os_type}")
+        print(f" Unsupported Operating System Configuration: {target_os}")
         sys.exit(1)
 
-    print("\n [SUCCESS] Environment completely configured via setup_all.py!")
+    print(f"\n [SUCCESS] Workspace environment for {target_os} fully updated and compiled!")
 
 if __name__ == "__main__":
     main()
