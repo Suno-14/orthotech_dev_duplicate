@@ -94,7 +94,7 @@ if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
 }
 
 # --- Step 4: Visual Studio Build Tools 2022 -----------------------------------
-Header "Step 4 - Visual Studio Build Tools 2022"
+Header " Step 4 - Visual Studio Build Tools 2022 "
 
 $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
 if (-not (Test-Path $vsWhere)) {
