@@ -186,7 +186,7 @@ if (Test-Path $vsWhere) {
     Write-Host "  x MSVC: not found - check VS Build Tools installation" -ForegroundColor Red
 }
 
-# --- Done ---------------------------------------------------------------------
+# ---  Done  ---------------------------------------------------------------------
 Header "Done"
 Write-Host "  All prerequisites installed." -ForegroundColor Green
 Write-Host ""
