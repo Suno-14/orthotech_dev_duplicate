@@ -39,6 +39,7 @@ jobs:
   build-linux:
     name: Build — Linux
     runs-on: [self-hosted, linux, orthotech]
+    timeout-minutes: 60     
     if: |
       github.event_name != 'workflow_dispatch' ||
       (github.event_name == 'workflow_dispatch' && inputs.enable_linux == true)
@@ -67,6 +68,7 @@ jobs:
   # ----------------------------------------------------------------------------
   build-windows:
     name: Build — Windows
+    timeout-minutes: 60     
     runs-on: [self-hosted, windows, orthotech]
     if: |
       github.event_name != 'workflow_dispatch' ||

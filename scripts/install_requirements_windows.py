@@ -64,7 +64,7 @@ def main():
             for p in pip_pkgs
         ]
         print(f"  Installing: {' '.join(specs)}")
-        subprocess.run([sys.executable, "-m", "pip", "install"] + specs, check=True,shell=True)
+        subprocess.run([sys.executable, "-m", "pip", "install"] + specs, check=True, shell=True)
 
     # 3. CONFIGURE SOURCE BUILDS
     deps = data.get("source", [])
@@ -72,6 +72,13 @@ def main():
         refresh_windows_path()
         print("\n━━━━━━━ Executing Source Builds ━━━━━━━")
         cpu_count = str(os.cpu_count() or 4)
+        
+        custom_env = os.environ.copy()
+        if os.path.exists(r"C:\BuildTools"):
+            custom_env["VS2022INSTALLDIR"] = r"C:\BuildTools\"
+            # Also feed CMake's default hint flag directly into the PATH variable
+            custom_env["PATH"] = rf"C:\BuildTools\Common7\IDE;{custom_env.get('PATH', '')}"
+
         for dep in deps:
             name = dep["name"]
             tag = dep["tag"]
@@ -95,40 +102,38 @@ def main():
 
             cmake_extra = shlex.split(dep.get("cmake_args") or "")
             try:
-                # Your existing configuration step
                 subprocess.run([
                     "cmake", "-S", str(build_root), "-B", str(build_dir),
                     "-G", "Visual Studio 17 2022", "-A", "x64",
                     "-DCMAKE_BUILD_TYPE=Release",
                     f"-DCMAKE_INSTALL_PREFIX={install_prefix}",
-                ] + cmake_extra, check=True, shell=True)
+                ] + cmake_extra, check=True, shell=True, env=custom_env)
             except subprocess.CalledProcessError as e:
-                # DYNAMIC LOGGING: Read and print CMake's exact failure reason
                 log_file = build_dir / "CMakeFiles" / "CMakeError.log"
                 out_file = build_dir / "CMakeFiles" / "CMakeOutput.log"
                 print("\n[CRITICAL] CMake configuration failed! Printing internal diagnostics:")
                 if log_file.exists():
                     print(f"--- {log_file.name} ---")
-                    print(log_file.read_text(errors='ignore')[-2000:]) # Print last 2000 chars
+                    print(log_file.read_text(errors='ignore')[-2000:]) 
                 if out_file.exists():
                     print(f"--- {out_file.name} ---")
                     print(out_file.read_text(errors='ignore')[-1000:])
-                raise e # Keep original error handling intact
+                raise e 
 
             subprocess.run([
                 "cmake", "--build", str(build_dir),
                 "--config", "Release",
                 "--parallel", cpu_count
-            ], check=True,shell=True)
+            ], check=True, shell=True, env=custom_env)
 
             subprocess.run([
                 "cmake", "--install", str(build_dir), "--config", "Release"
-            ], check=True,shell=True)
+            ], check=True, shell=True, env=custom_env)
 
             post = dep.get("post_install", "").strip()
             if post:
                 print(f"  [POST] {post}")
-                subprocess.run(post, shell=True, check=True)
+                subprocess.run(post, shell=True, check=True, env=custom_env)
 
             stamp.touch()
             print(f"  [OK] {name} installed to {install_prefix}")
