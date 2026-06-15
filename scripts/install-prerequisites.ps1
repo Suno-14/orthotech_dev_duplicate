@@ -1,21 +1,17 @@
 # ==============================================================================
 # install-prerequisites.ps1 — Install all build prerequisites on Windows 11
-#
-# Run this once on a fresh machine before anything else.
-# Uses winget (built into Windows 11) — no third party tools needed.
-#
-# Usage (PowerShell as Administrator):
-#   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-#   .\install-prerequisites.ps1
 # ==============================================================================
 
 #Requires -RunAsAdministrator
 
+$ErrorActionPreference = "Stop"
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 function Header($msg) {
-    Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "====================================================" -ForegroundColor Cyan
     Write-Host "  $msg" -ForegroundColor Cyan
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+    Write-Host "====================================================" -ForegroundColor Cyan
 }
 function Log($msg)  { Write-Host "[INFO]   $msg" -ForegroundColor Gray }
 function Ok($msg)   { Write-Host "[OK]     $msg" -ForegroundColor Green }
@@ -71,23 +67,31 @@ if (-not (Get-Command pwsh -ErrorAction SilentlyContinue)) {
 
 # ── Step 1: Git ───────────────────────────────────────────────────────────────
 Header "Step 1 — Git"
-Install-WinGet "Git.Git" "Git"
+if (-not (Get-Command "git" -ErrorAction SilentlyContinue)) {
+    Install-WinGet "Git.Git" "Git"
+} else {
+    Ok "Git is already available."
+}
 
-# Refresh PATH so git is available immediately
-$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" +
-            [System.Environment]::GetEnvironmentVariable("PATH","User")
+$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH","User")
 
 # ── Step 2: CMake (3.22+) ─────────────────────────────────────────────────────
 Header "Step 2 — CMake"
-Install-WinGet "Kitware.CMake" "CMake"
+if (-not (Get-Command "cmake" -ErrorAction SilentlyContinue)) {
+    Install-WinGet "Kitware.CMake" "CMake"
+} else {
+    Ok "CMake is already available."
+}
 
 # ── Step 3: Python 3.11 ───────────────────────────────────────────────────────
 Header "Step 3 — Python 3.11"
-Install-WinGet "Python.Python.3.11" "Python 3.11"
+if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
+    Install-WinGet "Python.Python.3.11" "Python 3.11"
+} else {
+    Ok "Python is already available."
+}
 
 # ── Step 4: Visual Studio Build Tools 2022 ───────────────────────────────────
-# Build Tools only — no full IDE (lighter, faster, perfect for build machines)
-# Includes: MSVC compiler, Windows SDK, CMake integration
 Header "Step 4 — Visual Studio Build Tools 2022"
 
 $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
@@ -112,17 +116,16 @@ if (-not $vsInstalled) {
     Invoke-WebRequest -Uri $vsInstallerUrl -OutFile $vsInstaller
     $ProgressPreference = "Continue"
 
-    # Install with C++ workload silently
     $vsArgs = @(
         "--quiet",
         "--wait",
         "--norestart",
         "--nocache",
         "--installPath", "C:\BuildTools",
-        "--add", "Microsoft.VisualStudio.Workload.VCTools",          # C++ build tools
-        "--add", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", # MSVC compiler
-        "--add", "Microsoft.VisualStudio.Component.Windows11SDK.22621",# Windows SDK
-        "--add", "Microsoft.VisualStudio.Component.CMake"             # CMake integration
+        "--add", "Microsoft.VisualStudio.Workload.VCTools",
+        "--add", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+        "--add", "Microsoft.VisualStudio.Component.Windows11SDK.22621",
+        "--add", "Microsoft.VisualStudio.Component.CMake"
     )
 
     Start-Process -FilePath $vsInstaller -ArgumentList $vsArgs -Wait -NoNewWindow
@@ -139,14 +142,16 @@ if (-not $vsInstalled) {
 
 # ── Step 5: Ninja ─────────────────────────────────────────────────────────────
 Header "Step 5 — Ninja"
-Install-WinGet "Ninja-build.Ninja" "Ninja"
+if (-not (Get-Command "ninja" -ErrorAction SilentlyContinue)) {
+    Install-WinGet "Ninja-build.Ninja" "Ninja"
+} else {
+    Ok "Ninja is already available."
+}
 
 # ── Step 6: pip packages needed by the toolchain ─────────────────────────────
 Header "Step 6 — Python toolchain packages"
 
-# Refresh PATH to pick up newly installed Python
-$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" +
-            [System.Environment]::GetEnvironmentVariable("PATH","User")
+$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH","User")
 
 python -m pip install --quiet --upgrade pip
 python -m pip install --quiet pyyaml
@@ -155,9 +160,7 @@ Ok "pyyaml installed."
 # ── Step 7: Verify ────────────────────────────────────────────────────────────
 Header "Step 7 — Verification"
 
-# Refresh PATH one more time before checks
-$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" +
-            [System.Environment]::GetEnvironmentVariable("PATH","User")
+$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH","User")
 
 Check "git"    "git --version"               ">=2"
 Check "cmake"  "cmake --version"             ">=3.22"
@@ -165,7 +168,6 @@ Check "python" "python --version"            ">=3.11"
 Check "pip"    "python -m pip --version"     "any"
 Check "ninja"  "ninja --version"             "any"
 
-# Check MSVC via vswhere
 if (Test-Path $vsWhere) {
     $vsPath = & $vsWhere -latest -property installationPath 2>$null
     Write-Host "  ✓ MSVC: found at $vsPath" -ForegroundColor Green
@@ -179,7 +181,4 @@ Write-Host "  All prerequisites installed." -ForegroundColor Green
 Write-Host ""
 Write-Host "  IMPORTANT: Close and reopen PowerShell as Administrator" -ForegroundColor Yellow
 Write-Host "  so PATH changes take effect before running the next step." -ForegroundColor Yellow
-Write-Host ""
-Write-Host "  Next step:" -ForegroundColor White
-Write-Host "  .\dev-setup.ps1   <- install project dependencies" -ForegroundColor Cyan
 Write-Host ""
