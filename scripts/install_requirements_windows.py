@@ -95,14 +95,29 @@ def main():
 
             cmake_extra = shlex.split(dep.get("cmake_args") or "")
             try:
-                # 🌟 CLEANED: Switched back to standard Visual Studio 2022 x64 
-                # CMake will automatically look up the standard Program Files directory path!
-                subprocess.run([
+                # --- FIXED: Dynamically Construct CMake Arguments with vcpkg Binding ---
+                cmake_args = [
                     "cmake", "-S", str(build_root), "-B", str(build_dir),
                     "-G", "Visual Studio 17 2022", "-A", "x64",
                     "-DCMAKE_BUILD_TYPE=Release",
                     f"-DCMAKE_INSTALL_PREFIX={install_prefix}",
-                ] + cmake_extra, check=True, shell=True)
+                ]
+
+                # Check if vcpkg toolchain exists and hook it into CMake
+                vcpkg_toolchain = os.path.join(vcpkg_root, "scripts", "buildsystems", "vcpkg.cmake")
+                if os.path.exists(vcpkg_toolchain):
+                    cmake_args.append(f"-DCMAKE_TOOLCHAIN_FILE={vcpkg_toolchain}")
+                    print(f"  [SYSTEM] Successfully linked vcpkg dependency toolchain file.")
+                else:
+                    print(f"  [WARN] vcpkg toolchain not found at {vcpkg_toolchain}. Proceeding standalone.")
+
+                # Add configuration extras
+                cmake_args += cmake_extra
+
+                # Run configuration process
+                subprocess.run(cmake_args, check=True, shell=True)
+                # -----------------------------------------------------------------------
+
             except subprocess.CalledProcessError as e:
                 log_file = build_dir / "CMakeFiles" / "CMakeError.log"
                 out_file = build_dir / "CMakeFiles" / "CMakeOutput.log"
@@ -115,13 +130,14 @@ def main():
                     print(out_file.read_text(errors='ignore')[-1000:])
                 raise e 
 
-            # 🌟 CLEANED: Dropped env=custom_env pointers throughout the execution block
+            # Build phase
             subprocess.run([
                 "cmake", "--build", str(build_dir),
                 "--config", "Release",
                 "--parallel", cpu_count
             ], check=True, shell=True)
 
+            # Target installation phase
             subprocess.run([
                 "cmake", "--install", str(build_dir), "--config", "Release"
             ], check=True, shell=True)
