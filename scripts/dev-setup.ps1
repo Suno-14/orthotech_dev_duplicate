@@ -91,11 +91,12 @@ $env:VCPKG_ROOT = $VcpkgDir
 Ok "vcpkg bootstrapped successfully."
 
 # ── Step 4: Core Python Package Orchestrator Pass ─────────────────────────────
-Header "Step 3 — Run Dependency Installations (vcpkg, pip, source)"
-# Invoke our isolated Python dependency installer file directly
+Header -msg "Step 3 - Run Dependency Installations for vcpkg and pip and source"
+# Invoke your isolated Python dependency installer file directly
 python "$ScriptDir\install_requirements_windows.py"
 if ($LASTEXITCODE -ne 0) { Err "Package orchestration failed inside Python routine." }
 Ok "Dependencies fully resolved."
+
 
 # ── Step 5: optional project build ───────────────────────────────────────────
 if ($Build) {
