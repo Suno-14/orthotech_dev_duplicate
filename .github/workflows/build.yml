@@ -87,7 +87,7 @@ jobs:
       - name: Run Unified Toolchain Build & Test
         shell: pwsh
         run: |
-          py -3 scripts/setup_all.py --skip-prereqs --skip-pull
+          py -3 scripts/setup_all.py --skip-pull
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload Windows Build Artifacts
