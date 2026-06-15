@@ -109,13 +109,10 @@ if (Test-Path $vsWhere) {
         Ok "Visual Studio 2022 Build Tools already installed (v$vsVersion)."
         $vsInstalled = $true
     }
-} elseif (Test-Path "C:\BuildTools\VC\Tools\MSVC") {
-    Ok "Visual Studio 2022 Build Tools found inside custom path (C:\BuildTools)."
-    $vsInstalled = $true
 }
 
 if (-not $vsInstalled) {
-    Log "Installing Visual Studio Build Tools 2022..."
+    Log "Installing Visual Studio Build Tools 2022 to default directory..."
     Log "This is a large download (~3-4GB). Please wait..."
 
     $vsInstallerUrl = "https://aka.ms/vs/17/release/vs_BuildTools.exe"
@@ -125,12 +122,13 @@ if (-not $vsInstalled) {
     Invoke-WebRequest -Uri $vsInstallerUrl -OutFile $vsInstaller
     $ProgressPreference = "Continue"
 
+    # ?? FIXED: Removed the custom "--installPath", "C:\BuildTools" line 
+    # This forces the installer to use the standard global Program Files path!
     $vsArgs = @(
         "--quiet",
         "--wait",
         "--norestart",
         "--nocache",
-        "--installPath", "C:\BuildTools",
         "--add", "Microsoft.VisualStudio.Workload.VCTools",
         "--add", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
         "--add", "Microsoft.VisualStudio.Component.Windows11SDK.22621",

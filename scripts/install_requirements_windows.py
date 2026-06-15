@@ -9,7 +9,6 @@ import winreg
 
 def refresh_windows_path():
     """Dynamically reads the live system and user PATH keys from the registry
-
     and applies them directly to the running python instance memory.
     """
     try:
@@ -73,18 +72,6 @@ def main():
         print("\n━━━━━━━ Executing Source Builds ━━━━━━━")
         cpu_count = str(os.cpu_count() or 4)
         
-        custom_env = os.environ.copy()
-        if os.path.exists(r"C:\BuildTools"):
-            custom_env["VS2022INSTALLDIR"] = "C:\\BuildTools\\"
-            msvc_bin = "C:\\BuildTools\\VC\\Tools\\MSVC\\14.43.34808\\bin\\Hostx64\\x64"
-
-            if not os.path.exists(msvc_bin):
-                import glob
-                found = glob.glob("C:\\BuildTools\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64")
-                if found: msvc_bin = found[0]
-
-            custom_env["PATH"] = rf"C:\BuildTools\Common7\IDE;{custom_env.get('PATH', '')}"
-        
         for dep in deps:
             name = dep["name"]
             tag = dep["tag"]
@@ -108,12 +95,14 @@ def main():
 
             cmake_extra = shlex.split(dep.get("cmake_args") or "")
             try:
+                # 🌟 CLEANED: Switched back to standard Visual Studio 2022 x64 
+                # CMake will automatically look up the standard Program Files directory path!
                 subprocess.run([
                     "cmake", "-S", str(build_root), "-B", str(build_dir),
-                    "-G", "Ninja",
+                    "-G", "Visual Studio 17 2022", "-A", "x64",
                     "-DCMAKE_BUILD_TYPE=Release",
                     f"-DCMAKE_INSTALL_PREFIX={install_prefix}",
-                ] + cmake_extra, check=True, shell=True, env=custom_env)
+                ] + cmake_extra, check=True, shell=True)
             except subprocess.CalledProcessError as e:
                 log_file = build_dir / "CMakeFiles" / "CMakeError.log"
                 out_file = build_dir / "CMakeFiles" / "CMakeOutput.log"
@@ -126,20 +115,21 @@ def main():
                     print(out_file.read_text(errors='ignore')[-1000:])
                 raise e 
 
+            # 🌟 CLEANED: Dropped env=custom_env pointers throughout the execution block
             subprocess.run([
                 "cmake", "--build", str(build_dir),
                 "--config", "Release",
                 "--parallel", cpu_count
-            ], check=True, shell=True, env=custom_env)
+            ], check=True, shell=True)
 
             subprocess.run([
                 "cmake", "--install", str(build_dir), "--config", "Release"
-            ], check=True, shell=True, env=custom_env)
+            ], check=True, shell=True)
 
             post = dep.get("post_install", "").strip()
             if post:
                 print(f"  [POST] {post}")
-                subprocess.run(post, shell=True, check=True, env=custom_env)
+                subprocess.run(post, shell=True, check=True)
 
             stamp.touch()
             print(f"  [OK] {name} installed to {install_prefix}")
