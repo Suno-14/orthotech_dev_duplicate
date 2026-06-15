@@ -114,6 +114,10 @@ dependencies:
         triplet: x64-windows
       - name: boost-program-options
         triplet: x64-windows
+      - name: boost-asio
+        triplet: x64-windows
+
+
       - name: opencv
         triplet: x64-windows
 
