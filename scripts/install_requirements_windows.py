@@ -128,22 +128,23 @@ def main():
 
             cmake_extra = shlex.split(dep.get("cmake_args") or "")
             try:
-                # Dynamic CMake setup
+                # 1. Check if the toolchain file physically exists first
+                vcpkg_toolchain = os.path.join(vcpkg_root, "scripts", "buildsystems", "vcpkg.cmake")
+                if os.path.exists(vcpkg_toolchain):
+                    print(f"  [SYSTEM] Successfully linked vcpkg dependency toolchain file.")
+                else:
+                    print(f"  [WARN] vcpkg toolchain not found at {vcpkg_toolchain}. Proceeding standalone.")
+
+                # 2. Build the array cleanly with NO duplicates
                 cmake_args = [
                     "cmake", "-S", str(build_root), "-B", str(build_dir),
                     "-G", "Visual Studio 17 2022", "-A", "x64",
                     "-DCMAKE_BUILD_TYPE=Release",
                     f"-DCMAKE_INSTALL_PREFIX={install_prefix}",
-                    f"-DCMAKE_TOOLCHAIN_FILE={os.path.join(vcpkg_root, 'scripts', 'buildsystems', 'vcpkg.cmake')}"
+                    f"-DCMAKE_TOOLCHAIN_FILE={vcpkg_toolchain}", # Uses the variable safely once
+                    f"-DCMAKE_INCLUDE_PATH={os.path.join(vcpkg_root, 'installed', 'x64-windows', 'include')}",
+                    f"-DCMAKE_LIBRARY_PATH={os.path.join(vcpkg_root, 'installed', 'x64-windows', 'lib')}"
                 ]
-
-                # Bind toolchain to our freshly ensured vcpkg root folder
-                vcpkg_toolchain = os.path.join(vcpkg_root, "scripts", "buildsystems", "vcpkg.cmake")
-                if os.path.exists(vcpkg_toolchain):
-                    cmake_args.append(f"-DCMAKE_TOOLCHAIN_FILE={vcpkg_toolchain}")
-                    print(f"  [SYSTEM] Successfully linked vcpkg dependency toolchain file.")
-                else:
-                    print(f"  [WARN] vcpkg toolchain not found at {vcpkg_toolchain}. Proceeding standalone.")
 
                 cmake_args += cmake_extra
                 subprocess.run(cmake_args, check=True, shell=True)
