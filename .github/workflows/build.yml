@@ -52,7 +52,7 @@ jobs:
         run: |
             python3 -m venv build_env
             source build_env/bin/activate
-            python3 scripts/setup_all.py --skip-prereqs --skip-pull
+            python3 scripts/setup_all.py --skip-pull
    
       - name: Upload Linux Build Artifacts
         if: success()

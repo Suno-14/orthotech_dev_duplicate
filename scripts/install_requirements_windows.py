@@ -5,6 +5,27 @@ import json
 import shlex
 import subprocess
 from pathlib import Path
+import winreg
+
+def refresh_windows_path():
+    """Dynamically reads the live system and user PATH keys from the registry
+
+    and applies them directly to the running python instance memory.
+    """
+    try:
+        # Read Machine Path Environment
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment") as key:
+            machine_path = winreg.QueryValueEx(key, "Path")[0]
+        
+        # Read User Path Environment
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Environment") as key:
+            user_path = winreg.QueryValueEx(key, "Path")[0]
+        
+        # Combine them and update active process memory
+        os.environ["PATH"] = f"{machine_path};{user_path}"
+        print("  [SYSTEM] Environment PATH successfully updated from registry.")
+    except Exception as e:
+        print(f"  [WARN] Dynamic path refresh skipped: {e}")
 
 def main():
     repo_root = Path(__file__).resolve().parent.parent
@@ -48,6 +69,7 @@ def main():
     # 3. CONFIGURE SOURCE BUILDS
     deps = data.get("source", [])
     if deps:
+        refresh_windows_path()
         print("\n━━━━━━━ Executing Source Builds ━━━━━━━")
         cpu_count = str(os.cpu_count() or 4)
         for dep in deps:
