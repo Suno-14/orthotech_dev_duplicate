@@ -4,7 +4,7 @@
 #
 # Run this once on a fresh machine before anything else.
 #
-# Usage:
+#  Usage :
 #   chmod +x install-prerequisites.sh
 #   ./install-prerequisites.sh
 # ==============================================================================
