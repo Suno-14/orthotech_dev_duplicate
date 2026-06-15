@@ -11,7 +11,8 @@ def main():
     req_file = repo_root / "generated" / "windows-requirements.json"
     install_prefix = Path(r"C:\orthotech_dev\deps")
     source_cache = install_prefix / "src"
-
+    source_cache.mkdir(parents=True, exist_ok=True)
+    print(f"[Python System] Reading mapped configurations from: {req_file}")
     if not req_file.exists():
         print(f"[ERROR] Requirements file missing: {req_file}")
         sys.exit(1)
