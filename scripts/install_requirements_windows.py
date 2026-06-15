@@ -31,7 +31,7 @@ def main():
             triplet = p.get("triplet", "x64-windows")
             spec = f"{name}:{triplet}"
             print(f"  Installing {spec}...")
-            subprocess.run([vcpkg_exe, "install", spec])
+            subprocess.run([vcpkg_exe, "install", spec], shell=True)
 
     # 2. INSTALL PIP PACKAGES
     pip_pkgs = data.get("pip", [])
@@ -43,7 +43,7 @@ def main():
             for p in pip_pkgs
         ]
         print(f"  Installing: {' '.join(specs)}")
-        subprocess.run([sys.executable, "-m", "pip", "install"] + specs, check=True)
+        subprocess.run([sys.executable, "-m", "pip", "install"] + specs, check=True,shell=True)
 
     # 3. CONFIGURE SOURCE BUILDS
     deps = data.get("source", [])
@@ -76,17 +76,17 @@ def main():
                 "cmake", "-S", str(build_root), "-B", str(build_dir),
                 "-DCMAKE_BUILD_TYPE=Release",
                 f"-DCMAKE_INSTALL_PREFIX={install_prefix}",
-            ] + cmake_extra, check=True)
+            ] + cmake_extra, check=True ,shell=True)
 
             subprocess.run([
                 "cmake", "--build", str(build_dir),
                 "--config", "Release",
                 "--parallel", cpu_count
-            ], check=True)
+            ], check=True,shell=True)
 
             subprocess.run([
                 "cmake", "--install", str(build_dir), "--config", "Release"
-            ], check=True)
+            ], check=True,shell=True)
 
             post = dep.get("post_install", "").strip()
             if post:
