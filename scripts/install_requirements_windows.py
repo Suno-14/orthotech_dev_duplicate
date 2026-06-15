@@ -6,6 +6,7 @@ import shlex
 import subprocess
 from pathlib import Path
 import winreg
+import shutil
 
 def refresh_windows_path():
     """Dynamically reads the live system and user PATH keys from the registry
@@ -109,6 +110,15 @@ def main():
 
             build_root = src_dir / (dep.get("build_dir") or "")
             build_dir = src_dir / "_build"
+            cmake_cache = build_dir / "CMakeCache.txt"
+            
+            if build_dir.exists():
+                # If the folder exists but CMake never finished configuring, it's a confirmed crash
+                if not cmake_cache.exists():
+                    print(f"  [CLEAN] Configuration crashed previously. Wiping corrupted directory: {build_dir}")
+                    shutil.rmtree(build_dir, ignore_errors=True)
+                else:
+                    print(f"  [CACHE] Valid CMake layout detected. Retaining folder for incremental build.")
             build_dir.mkdir(exist_ok=True)
 
             cmake_extra = shlex.split(dep.get("cmake_args") or "")
