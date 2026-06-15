@@ -18,10 +18,10 @@ def is_admin():
     except Exception:
         return False
 
-def run_script(cmd, shell=False):
+def run_script(cmd, shell=False,env=None):
     """Executes a terminal or shell script cleanly."""
     print(f"\n Running: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
-    result = subprocess.run(cmd, shell=shell)
+    result = subprocess.run(cmd, shell=shell, env=env)
     if result.returncode != 0:
         print(f" Error: Command failed with exit code {result.returncode}")
         sys.exit(result.returncode)
@@ -193,8 +193,14 @@ def main():
                         "-File", "scripts/install-prerequisites.ps1"])
 
         print("\n Processing Windows build configuration...")
+        
+        # 🌟 Create a copy of the existing environment variables and add UTF-8 forced compliance
+        win_env = os.environ.copy()
+        win_env["PYTHONUTF8"] = "1"
+        
+        # Pass win_env into your updated run_script function
         run_script(["powershell", "-ExecutionPolicy", "Bypass",
-                    "-File", "scripts/dev-setup.ps1", "-Build", "-Test"])
+                    "-File", "scripts/dev-setup.ps1", "-Build", "-Test"], env=win_env)
 
     elif target_os == "Linux":
         if not args.skip_prereqs:
