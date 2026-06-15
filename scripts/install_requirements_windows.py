@@ -8,7 +8,7 @@ from pathlib import Path
 
 def main():
     repo_root = Path(__file__).resolve().parent.parent
-    req_file = repo_root / "generated" / "windows-requirements.json"
+    req_file = (repo_root / "generated" / "windows-requirements.json").resolve()
     install_prefix = Path(r"C:\orthotech_dev\deps")
     source_cache = install_prefix / "src"
     source_cache.mkdir(parents=True, exist_ok=True)

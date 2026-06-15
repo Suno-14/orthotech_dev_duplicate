@@ -176,7 +176,7 @@ def generate(config_path: Path, validate_flag: bool):
         if validate_flag:
             validate(req, platform)
 
-        out_path = REPO_ROOT / output_map[platform]
+        out_path = (REPO_ROOT / output_map[platform]).resolve()
         out_path.parent.mkdir(parents=True, exist_ok=True)
 
         with out_path.open("w", encoding="utf-8") as fh:
