@@ -66,16 +66,13 @@ log "Repo root      : ${REPO_ROOT}"
 log "Install prefix : ${INSTALL_PREFIX}"
 log "Requirements   : ${REQ_FILE}"
 
-# ── Step 1: Regen ─────────────────────────────────────────────────────────────
-header "Step 1 — Requirements"
-if [[ "$REGEN" == "true" || ! -f "$REQ_FILE" ]]; then
-  log "Running generate_requirements.py..."
-  python3 -m pip install --quiet pyyaml
-  python3 "${SCRIPT_DIR}/generate_requirements.py" --validate
-  ok "Requirements generated."
-else
-  log "linux-requirements.json exists. Use --regen to regenerate."
+# ── Step 1: Verify Requirements ───────────────────────────────────────────────
+header "Step 1 — Verify Requirements"
+
+if [[ ! -f "$REQ_FILE" ]]; then
+  err "Requirements file missing: $REQ_FILE. Please run setup_all.py first."
 fi
+ok "Found generated requirements file."
 
 # ── Step 2: Clean ─────────────────────────────────────────────────────────────
 if [[ "$CLEAN" == "true" ]]; then

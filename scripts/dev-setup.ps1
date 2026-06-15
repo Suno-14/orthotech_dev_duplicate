@@ -56,27 +56,13 @@ Log "Install prefix : $InstallPrefix"
 Log "vcpkg dir      : $VcpkgDir"
 Log "Requirements   : $ReqFile"
 
-# ── Step 1: Regen ─────────────────────────────────────────────────────────────
-Header "Step 1 — Requirements"
+# ── Step 1: Verify Requirements ───────────────────────────────────────────────
+Header "Step 1 — Verify Requirements"
 
-# Define the absolute path to dependencies.yml
-$ConfigFile = Join-Path $RepoRoot "config\dependencies.yml"
-
-if ($Regen -or -not (Test-Path $ReqFile)) {
-    Log "Installing toolchain dependencies..."
-    python -m pip install --quiet pyyaml
-    
-    Log "Running requirements generator with config: $ConfigFile"
-    python "$ScriptDir\generate_requirements.py" --config "$ConfigFile" --validate
-    
-    if ($LASTEXITCODE -ne 0) {
-        Err "generate_requirements.py failed to execute correctly."
-    }
-    Ok "Requirements generated."
-} else {
-    Log "windows-requirements.json exists. Use -Regen to regenerate."
+if (-not (Test-Path $ReqFile)) {
+    Err "Requirements file missing: $ReqFile. Please run setup_all.py first."
 }
-
+Ok "Found generated requirements file."
 # ── Step 2: Clean ─────────────────────────────────────────────────────────────
 if ($Clean -and (Test-Path $InstallPrefix)) {
     Warn "-Clean: removing $InstallPrefix"
