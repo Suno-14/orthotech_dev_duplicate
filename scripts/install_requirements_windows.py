@@ -94,11 +94,26 @@ def main():
             build_dir.mkdir(exist_ok=True)
 
             cmake_extra = shlex.split(dep.get("cmake_args") or "")
-            subprocess.run([
-                "cmake", "-S", str(build_root), "-B", str(build_dir),
-                "-DCMAKE_BUILD_TYPE=Release",
-                f"-DCMAKE_INSTALL_PREFIX={install_prefix}",
-            ] + cmake_extra, check=True ,shell=True)
+            try:
+                # Your existing configuration step
+                subprocess.run([
+                    "cmake", "-S", str(build_root), "-B", str(build_dir),
+                    "-G", "Visual Studio 17 2022", "-A", "x64",
+                    "-DCMAKE_BUILD_TYPE=Release",
+                    f"-DCMAKE_INSTALL_PREFIX={install_prefix}",
+                ] + cmake_extra, check=True, shell=True)
+            except subprocess.CalledProcessError as e:
+                # DYNAMIC LOGGING: Read and print CMake's exact failure reason
+                log_file = build_dir / "CMakeFiles" / "CMakeError.log"
+                out_file = build_dir / "CMakeFiles" / "CMakeOutput.log"
+                print("\n[CRITICAL] CMake configuration failed! Printing internal diagnostics:")
+                if log_file.exists():
+                    print(f"--- {log_file.name} ---")
+                    print(log_file.read_text(errors='ignore')[-2000:]) # Print last 2000 chars
+                if out_file.exists():
+                    print(f"--- {out_file.name} ---")
+                    print(out_file.read_text(errors='ignore')[-1000:])
+                raise e # Keep original error handling intact
 
             subprocess.run([
                 "cmake", "--build", str(build_dir),
