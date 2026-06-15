@@ -73,7 +73,9 @@ if (-not (Get-Command "git" -ErrorAction SilentlyContinue)) {
     Ok "Git is already available."
 }
 
-$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH","User")
+$machinePath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
+$userPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
+$env:PATH = "${machinePath};${userPath}"
 
 # ── Step 2: CMake (3.22+) ─────────────────────────────────────────────────────
 Header "Step 2 — CMake"
@@ -151,7 +153,9 @@ if (-not (Get-Command "ninja" -ErrorAction SilentlyContinue)) {
 # ── Step 6: pip packages needed by the toolchain ─────────────────────────────
 Header "Step 6 — Python toolchain packages"
 
-$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH","User")
+$machinePath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
+$userPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
+$env:PATH = "${machinePath};${userPath}"
 
 python -m pip install --quiet --upgrade pip
 python -m pip install --quiet pyyaml
@@ -160,7 +164,9 @@ Ok "pyyaml installed."
 # ── Step 7: Verify ────────────────────────────────────────────────────────────
 Header "Step 7 — Verification"
 
-$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH","User")
+$machinePath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
+$userPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
+$env:PATH = "${machinePath};${userPath}"
 
 Check "git"    "git --version"               ">=2"
 Check "cmake"  "cmake --version"             ">=3.22"
@@ -178,7 +184,4 @@ if (Test-Path $vsWhere) {
 # ── Done ──────────────────────────────────────────────────────────────────────
 Header "Done"
 Write-Host "  All prerequisites installed." -ForegroundColor Green
-Write-Host ""
-Write-Host "  IMPORTANT: Close and reopen PowerShell as Administrator" -ForegroundColor Yellow
-Write-Host "  so PATH changes take effect before running the next step." -ForegroundColor Yellow
 Write-Host ""
