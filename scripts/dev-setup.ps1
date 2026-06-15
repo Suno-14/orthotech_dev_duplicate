@@ -234,7 +234,7 @@ if ($Build) {
     Ok "Project built."
 }
 
-# ── Step 8: optional tests ────────────────────────────────────────────────────
+# ── Step 8: optional  tests ────────────────────────────────────────────────────
 if ($Test) {
     Header "Step 7 — Tests"
     ctest --test-dir $BuildDir --build-config Release --output-on-failure --parallel 4
