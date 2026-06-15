@@ -48,13 +48,11 @@ function Check($name, $cmd, $ver) {
 
 # ── Banner ────────────────────────────────────────────────────────────────────
 Clear-Host
-Write-Host @"
-
-  ╔══════════════════════════════════════════════════════╗
-  ║    orthotech_dev — Windows Prerequisites Setup       ║
-  ╚══════════════════════════════════════════════════════╝
-
-"@ -ForegroundColor Cyan
+Write-Host ""
+Write-Host "====================================================" -ForegroundColor Cyan
+Write-Host "   orthotech_dev — Windows Prerequisites Setup      " -ForegroundColor Cyan
+Write-Host "====================================================" -ForegroundColor Cyan
+Write-Host ""
 
 # ── Winget check ──────────────────────────────────────────────────────────────
 Header "Checking winget"
