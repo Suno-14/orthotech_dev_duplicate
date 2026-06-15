@@ -119,6 +119,7 @@ def main():
                     "-G", "Visual Studio 17 2022", "-A", "x64",
                     "-DCMAKE_BUILD_TYPE=Release",
                     f"-DCMAKE_INSTALL_PREFIX={install_prefix}",
+                    f"-DCMAKE_TOOLCHAIN_FILE={os.path.join(vcpkg_root, 'scripts', 'buildsystems', 'vcpkg.cmake')}"
                 ]
 
                 # Bind toolchain to our freshly ensured vcpkg root folder
