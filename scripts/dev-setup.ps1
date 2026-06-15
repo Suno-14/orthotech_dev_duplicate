@@ -106,8 +106,8 @@ Ok "vcpkg ready."
 
 # ── Step 4: vcpkg packages ────────────────────────────────────────────────────
 Header "Step 3 — vcpkg packages"
-# Safe string storage that PowerShell can't misinterpret
-$VcpkgScript = '
+# Safe string storage that PowerShell can't misinterpret using Here-Strings
+$VcpkgScript = @'
 import json, subprocess, sys, os
 vcpkg_exe = os.path.join(os.environ["VCPKG_ROOT"], "vcpkg.exe")
 with open(r"C:\orthotech_dev\generated\windows-requirements.json") as f:
@@ -124,14 +124,15 @@ for p in pkgs:
     r = subprocess.run([vcpkg_exe, "install", spec])
     if r.returncode != 0:
         print(f"  [WARN] vcpkg install failed for {spec} — continuing.")
-'
+'@
 $VcpkgScript | python -
 if ($LASTEXITCODE -ne 0) { Err "vcpkg packages installation failed." }
 Ok "vcpkg packages done."
 
 # ── Step 5: pip packages ──────────────────────────────────────────────────────
 Header "Step 4 — pip packages"
-$PipScript = '
+# Notice how the double quotes and single quote inner dictionaries parse safely now
+$PipScript = @'
 import json, subprocess, sys
 with open(r"C:\orthotech_dev\generated\windows-requirements.json") as f:
     data = json.load(f)
@@ -140,20 +141,20 @@ if not pkgs:
     print("  No pip packages defined.")
     sys.exit(0)
 specs = [
-    f"{p['"name"']}=={p['"version"']}" if p.get('"version"') and p['"version"'] != "latest"
-    else p['"name"']
+    f"{p['name']}=={p['version']}" if p.get('version') and p['version'] != "latest"
+    else p['name']
     for p in pkgs
 ]
-print(f"  Installing: {" ".join(specs)}")
+print(f"  Installing: {' '.join(specs)}")
 subprocess.run([sys.executable, "-m", "pip", "install"] + specs, check=True)
-'
+'@
 $PipScript | python -
 if ($LASTEXITCODE -ne 0) { Err "pip packages installation failed." }
 Ok "pip packages done."
 
 # ── Step 6: source builds ─────────────────────────────────────────────────────
 Header "Step 5 — Source builds"
-$SourceScript = '
+$SourceScript = @'
 import json, os, subprocess, sys, shlex
 from pathlib import Path
 
@@ -218,7 +219,7 @@ for dep in deps:
     print(f"  [OK] {name} installed to {install_prefix}")
 
 print(f"\n  All source deps installed to {install_prefix}")
-'
+'@
 $SourceScript | python -
 if ($LASTEXITCODE -ne 0) { Err "Source build failed." }
 Ok "Source builds done."
