@@ -76,6 +76,13 @@ def main():
         custom_env = os.environ.copy()
         if os.path.exists(r"C:\BuildTools"):
             custom_env["VS2022INSTALLDIR"] = "C:\\BuildTools\\"
+            msvc_bin = "C:\\BuildTools\\VC\\Tools\\MSVC\\14.43.34808\\bin\\Hostx64\\x64"
+
+            if not os.path.exists(msvc_bin):
+                import glob
+                found = glob.glob("C:\\BuildTools\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64")
+                if found: msvc_bin = found[0]
+
             custom_env["PATH"] = rf"C:\BuildTools\Common7\IDE;{custom_env.get('PATH', '')}"
         
         for dep in deps:
@@ -103,7 +110,7 @@ def main():
             try:
                 subprocess.run([
                     "cmake", "-S", str(build_root), "-B", str(build_dir),
-                    "-G", "Visual Studio 17 2022", "-A", "x64",
+                    "-G", "Ninja",
                     "-DCMAKE_BUILD_TYPE=Release",
                     f"-DCMAKE_INSTALL_PREFIX={install_prefix}",
                 ] + cmake_extra, check=True, shell=True, env=custom_env)
