@@ -60,7 +60,7 @@ Log "Requirements   : $ReqFile"
 Header "Step 1 — Requirements"
 if ($Regen -or -not (Test-Path $ReqFile)) {
     python -m pip install --quiet pyyaml
-    python "$ScriptDir\generate_requirements.py" --validate
+    python "$ScriptDir\generate_requirements.py" --config "$ConfigFile" --validate
     Ok "Requirements generated."
 } else {
     Log "windows-requirements.json exists. Use -Regen to regenerate."
