@@ -65,7 +65,7 @@ def main():
                 subprocess.run([
                     "git", "clone", "--depth=1", "--branch", tag,
                     dep["repo"], str(src_dir)
-                ], check=True)
+                ], check=True, shell=True)
 
             build_root = src_dir / (dep.get("build_dir") or "")
             build_dir = src_dir / "_build"
