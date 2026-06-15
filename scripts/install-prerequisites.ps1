@@ -97,6 +97,10 @@ if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
 Header "Step 4 - Visual Studio Build Tools 2022"
 
 $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+if (-not (Test-Path $vsWhere)) {
+    $vsWhere = "${env:ProgramFiles}\Microsoft Visual Studio\Installer\vswhere.exe"
+}
+
 $vsInstalled = $false
 
 if (Test-Path $vsWhere) {
@@ -105,6 +109,9 @@ if (Test-Path $vsWhere) {
         Ok "Visual Studio 2022 Build Tools already installed (v$vsVersion)."
         $vsInstalled = $true
     }
+} elseif (Test-Path "C:\BuildTools\VC\Tools\MSVC") {
+    Ok "Visual Studio 2022 Build Tools found inside custom path (C:\BuildTools)."
+    $vsInstalled = $true
 }
 
 if (-not $vsInstalled) {
