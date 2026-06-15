@@ -111,15 +111,20 @@ def main():
             build_root = src_dir / (dep.get("build_dir") or "")
             build_dir = src_dir / "_build"
             cmake_cache = build_dir / "CMakeCache.txt"
+            build_marker = build_dir / ".building" 
             
             if build_dir.exists():
-                # If the folder exists but CMake never finished configuring, it's a confirmed crash
-                if not cmake_cache.exists():
-                    print(f"  [CLEAN] Configuration crashed previously. Wiping corrupted directory: {build_dir}")
+                # Condition 1: Configuration blew up (No CMakeCache)
+                # Condition 2: Compiler blew up mid-build last time (Leftover marker)
+                if not cmake_cache.exists() or build_marker.exists():
+                    print(f"  [CLEAN] Confirmed previous crash/failure. Wiping directory: {build_dir}")
                     shutil.rmtree(build_dir, ignore_errors=True)
                 else:
-                    print(f"  [CACHE] Valid CMake layout detected. Retaining folder for incremental build.")
+                    print(f"  [CACHE] Valid previous build detected. Retaining folder for incremental build.")
+
+
             build_dir.mkdir(exist_ok=True)
+            build_marker.touch()
 
             cmake_extra = shlex.split(dep.get("cmake_args") or "")
             try:
@@ -171,6 +176,9 @@ def main():
             if post:
                 print(f"  [POST] {post}")
                 subprocess.run(post, shell=True, check=True)
+
+            if build_marker.exists():
+                build_marker.unlink()
 
             stamp.touch()
             print(f"  [OK] {name} installed to {install_prefix}")
