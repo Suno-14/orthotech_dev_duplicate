@@ -40,11 +40,29 @@ def main():
     with open(req_file, "r") as f:
         data = json.load(f)
 
-    # 1. INSTALL VCPKG PACKAGES
+    # 1. AUTOMATED VCPKG SELF-HEALING & INSTALLATION
     vcpkg_root = os.environ.get("VCPKG_ROOT", r"C:\orthotech_dev\vcpkg")
     vcpkg_exe = os.path.join(vcpkg_root, "vcpkg.exe")
     pkgs = data.get("vcpkg", [])
-    if pkgs and os.path.exists(vcpkg_exe):
+
+    if pkgs:
+        # If vcpkg directory or executable is completely missing, download and build it!
+        if not os.path.exists(vcpkg_exe):
+            print("\n━━━━━━━ [AUTOMATION] vcpkg Missing! Bootstrapping Engine ━━━━━━━")
+            os.makedirs(os.path.dirname(vcpkg_root), exist_ok=True)
+            
+            if not os.path.exists(vcpkg_root):
+                print(f"  Cloning official vcpkg repository into {vcpkg_root}...")
+                subprocess.run([
+                    "git", "clone", "https://github.com/microsoft/vcpkg.git", vcpkg_root
+                ], check=True, shell=True)
+            
+            print("  Compiling vcpkg core executable engine...")
+            bootstrap_script = os.path.join(vcpkg_root, "bootstrap-vcpkg.bat")
+            subprocess.run([bootstrap_script], check=True, shell=True, cwd=vcpkg_root)
+            print("  [OK] vcpkg engine is successfully compiled and active.")
+
+        # Proceed to run installations safely now that vcpkg_exe guaranteed to exist
         print("\n━━━━━━━ Installing vcpkg packages ━━━━━━━")
         for p in pkgs:
             name = p["name"]
@@ -95,7 +113,7 @@ def main():
 
             cmake_extra = shlex.split(dep.get("cmake_args") or "")
             try:
-                # --- FIXED: Dynamically Construct CMake Arguments with vcpkg Binding ---
+                # Dynamic CMake setup
                 cmake_args = [
                     "cmake", "-S", str(build_root), "-B", str(build_dir),
                     "-G", "Visual Studio 17 2022", "-A", "x64",
@@ -103,7 +121,7 @@ def main():
                     f"-DCMAKE_INSTALL_PREFIX={install_prefix}",
                 ]
 
-                # Check if vcpkg toolchain exists and hook it into CMake
+                # Bind toolchain to our freshly ensured vcpkg root folder
                 vcpkg_toolchain = os.path.join(vcpkg_root, "scripts", "buildsystems", "vcpkg.cmake")
                 if os.path.exists(vcpkg_toolchain):
                     cmake_args.append(f"-DCMAKE_TOOLCHAIN_FILE={vcpkg_toolchain}")
@@ -111,12 +129,8 @@ def main():
                 else:
                     print(f"  [WARN] vcpkg toolchain not found at {vcpkg_toolchain}. Proceeding standalone.")
 
-                # Add configuration extras
                 cmake_args += cmake_extra
-
-                # Run configuration process
                 subprocess.run(cmake_args, check=True, shell=True)
-                # -----------------------------------------------------------------------
 
             except subprocess.CalledProcessError as e:
                 log_file = build_dir / "CMakeFiles" / "CMakeError.log"
@@ -127,7 +141,7 @@ def main():
                     print(log_file.read_text(errors='ignore')[-2000:]) 
                 if out_file.exists():
                     print(f"--- {out_file.name} ---")
-                    print(out_file.read_text(errors='ignore')[-1000:])
+                    print(log_file.read_text(errors='ignore')[-1000:])
                 raise e 
 
             # Build phase
