@@ -1,12 +1,12 @@
 # ==============================================================================
-# install-prerequisites.ps1 — Install all build prerequisites on Windows 11
+# install-prerequisites.ps1 - Install all build prerequisites on Windows 11
 # ==============================================================================
 
 #Requires -RunAsAdministrator
 
 $ErrorActionPreference = "Stop"
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# --- Helpers ------------------------------------------------------------------
 function Header($msg) {
     Write-Host ""
     Write-Host "====================================================" -ForegroundColor Cyan
@@ -36,37 +36,37 @@ function Install-WinGet($id, $name) {
 function Check($name, $cmd, $ver) {
     try {
         $out = Invoke-Expression $cmd 2>$null | Select-Object -First 1
-        Write-Host "  ✓ ${name}: $out" -ForegroundColor Green
+        Write-Host "  v ${name}: $out" -ForegroundColor Green
     } catch {
-        Write-Host "  ✗ ${name}: NOT FOUND" -ForegroundColor Red
+        Write-Host "  x ${name}: NOT FOUND" -ForegroundColor Red
     }
 }
 
-# ── Banner ────────────────────────────────────────────────────────────────────
+# --- Banner -------------------------------------------------------------------
 Clear-Host
 Write-Host ""
 Write-Host "====================================================" -ForegroundColor Cyan
-Write-Host "   orthotech_dev — Windows Prerequisites Setup      " -ForegroundColor Cyan
+Write-Host "   orthotech_dev - Windows Prerequisites Setup      " -ForegroundColor Cyan
 Write-Host "====================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# ── Winget check ──────────────────────────────────────────────────────────────
+# --- Winget check -------------------------------------------------------------
 Header "Checking winget"
 if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
     Err "winget not found. Update Windows 11 or install App Installer from the Microsoft Store."
 }
 Ok "winget available."
 
-# ── Step 0: PowerShell Core (pwsh) ──────────────────────────────────────
-Header "Step 0 — PowerShell Core"
+# --- Step 0: PowerShell Core (pwsh) -------------------------------------------
+Header "Step 0 - PowerShell Core"
 if (-not (Get-Command pwsh -ErrorAction SilentlyContinue)) {
     Install-WinGet "Microsoft.PowerShell" "PowerShell Core"
 } else {
     Ok "PowerShell Core (pwsh) is already installed."
 }
 
-# ── Step 1: Git ───────────────────────────────────────────────────────────────
-Header "Step 1 — Git"
+# --- Step 1: Git --------------------------------------------------------------
+Header "Step 1 - Git"
 if (-not (Get-Command "git" -ErrorAction SilentlyContinue)) {
     Install-WinGet "Git.Git" "Git"
 } else {
@@ -75,26 +75,26 @@ if (-not (Get-Command "git" -ErrorAction SilentlyContinue)) {
 
 $machinePath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
 $userPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
-$env:PATH = "${machinePath};${userPath}"
+$env:PATH = "$machinePath;$userPath"
 
-# ── Step 2: CMake (3.22+) ─────────────────────────────────────────────────────
-Header "Step 2 — CMake"
+# --- Step 2: CMake (3.22+) ----------------------------------------------------
+Header "Step 2 - CMake"
 if (-not (Get-Command "cmake" -ErrorAction SilentlyContinue)) {
     Install-WinGet "Kitware.CMake" "CMake"
 } else {
     Ok "CMake is already available."
 }
 
-# ── Step 3: Python 3.11 ───────────────────────────────────────────────────────
-Header "Step 3 — Python 3.11"
+# --- Step 3: Python 3.11 ------------------------------------------------------
+Header "Step 3 - Python 3.11"
 if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
     Install-WinGet "Python.Python.3.11" "Python 3.11"
 } else {
     Ok "Python is already available."
 }
 
-# ── Step 4: Visual Studio Build Tools 2022 ───────────────────────────────────
-Header "Step 4 — Visual Studio Build Tools 2022"
+# --- Step 4: Visual Studio Build Tools 2022 -----------------------------------
+Header "Step 4 - Visual Studio Build Tools 2022"
 
 $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
 $vsInstalled = $false
@@ -142,31 +142,31 @@ if (-not $vsInstalled) {
     }
 }
 
-# ── Step 5: Ninja ─────────────────────────────────────────────────────────────
-Header "Step 5 — Ninja"
+# --- Step 5: Ninja ------------------------------------------------------------
+Header "Step 5 - Ninja"
 if (-not (Get-Command "ninja" -ErrorAction SilentlyContinue)) {
     Install-WinGet "Ninja-build.Ninja" "Ninja"
 } else {
     Ok "Ninja is already available."
 }
 
-# ── Step 6: pip packages needed by the toolchain ─────────────────────────────
-Header "Step 6 — Python toolchain packages"
+# --- Step 6: pip packages needed by the toolchain -----------------------------
+Header "Step 6 - Python toolchain packages"
 
 $machinePath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
 $userPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
-$env:PATH = "${machinePath};${userPath}"
+$env:PATH = "$machinePath;$userPath"
 
 python -m pip install --quiet --upgrade pip
 python -m pip install --quiet pyyaml
 Ok "pyyaml installed."
 
-# ── Step 7: Verify ────────────────────────────────────────────────────────────
-Header "Step 7 — Verification"
+# --- Step 7: Verification -----------------------------------------------------
+Header "Step 7 - Verification"
 
 $machinePath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
 $userPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
-$env:PATH = "${machinePath};${userPath}"
+$env:PATH = "$machinePath;$userPath"
 
 Check "git"    "git --version"               ">=2"
 Check "cmake"  "cmake --version"             ">=3.22"
@@ -176,12 +176,12 @@ Check "ninja"  "ninja --version"             "any"
 
 if (Test-Path $vsWhere) {
     $vsPath = & $vsWhere -latest -property installationPath 2>$null
-    Write-Host "  ✓ MSVC: found at $vsPath" -ForegroundColor Green
+    Write-Host "  v MSVC: found at $vsPath" -ForegroundColor Green
 } else {
-    Write-Host "  ✗ MSVC: not found — check VS Build Tools installation" -ForegroundColor Red
+    Write-Host "  x MSVC: not found - check VS Build Tools installation" -ForegroundColor Red
 }
 
-# ── Done ──────────────────────────────────────────────────────────────────────
+# --- Done ---------------------------------------------------------------------
 Header "Done"
 Write-Host "  All prerequisites installed." -ForegroundColor Green
 Write-Host ""
