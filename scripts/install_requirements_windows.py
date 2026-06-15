@@ -75,10 +75,9 @@ def main():
         
         custom_env = os.environ.copy()
         if os.path.exists(r"C:\BuildTools"):
-            custom_env["VS2022INSTALLDIR"] = r"C:\BuildTools\"
-            # Also feed CMake's default hint flag directly into the PATH variable
+            custom_env["VS2022INSTALLDIR"] = "C:\\BuildTools\\"
             custom_env["PATH"] = rf"C:\BuildTools\Common7\IDE;{custom_env.get('PATH', '')}"
-
+        
         for dep in deps:
             name = dep["name"]
             tag = dep["tag"]
