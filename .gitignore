@@ -8,7 +8,7 @@ logs/
 .claude/
 __pycache__/
 .antigravitycli/
-
+generated/
 *.o
 *.out
 *.a
