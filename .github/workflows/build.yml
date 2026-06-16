@@ -47,7 +47,7 @@ jobs:
       - name: Checkout Code Base
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.DEPENDENCY_GITHUB_TOKEN }}
+          # token: ${{ secrets.DEPENDENCY_GITHUB_TOKEN }}
           submodules: true
 
       - name: Run Unified Toolchain Build & Test
