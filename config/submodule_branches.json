@@ -1,1 +1,8 @@
-{}
+{
+    "supervisor": 
+    {
+      "branch": "main",
+      "url": "git@github.com:IGRS-Robotics/supervisor.git",
+      "path": "src/supervisor"
+    }
+}

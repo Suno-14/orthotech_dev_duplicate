@@ -1,5 +1,13 @@
 build/
+.cache
+install/
 .build_hook/
+.clangd
+compile_commands.json
+logs/
+.claude/
+__pycache__/
+.antigravitycli/
 
 *.o
 *.out
@@ -9,3 +17,5 @@ build/
 __pycache__/
 
 .vscode/
+
+

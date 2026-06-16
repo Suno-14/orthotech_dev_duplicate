@@ -1,0 +1,86 @@
+{
+  "platform": "windows",
+  "project": {
+    "name": "orthotech_dev",
+    "cpp_standard": 17,
+    "python": "3.11"
+  },
+  "packages": [
+    {
+      "name": "cmake"
+    },
+    {
+      "name": "ninja-build"
+    }
+  ],
+  "vcpkg": [
+    {
+      "name": "eigen3",
+      "triplet": "x64-windows"
+    },
+    {
+      "name": "boost-system",
+      "triplet": "x64-windows"
+    },
+    {
+      "name": "boost-thread",
+      "triplet": "x64-windows"
+    },
+    {
+      "name": "boost-program-options",
+      "triplet": "x64-windows"
+    },
+    {
+      "name": "boost-asio",
+      "triplet": "x64-windows"
+    },
+    {
+      "name": "opencv",
+      "triplet": "x64-windows"
+    },
+    {
+      "name": "openssl",
+      "triplet": "x64-windows"
+    },
+    {
+      "name": "zlib",
+      "triplet": "x64-windows"
+    },
+    {
+      "name": "curl",
+      "triplet": "x64-windows"
+    }
+  ],
+  "source": [
+    {
+      "name": "ur_rtde",
+      "repo": "https://gitlab.com/sdurobotics/ur_rtde.git",
+      "tag": "v1.5.5",
+      "cmake_args": "-DPYTHON_BINDINGS=OFF -DRTDE_BUILD_EXAMPLES=OFF",
+      "build_dir": "",
+      "post_install": ""
+    },
+    {
+      "name": "spdlog",
+      "repo": "https://github.com/gabime/spdlog.git",
+      "tag": "v1.14.1",
+      "cmake_args": "-DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_TESTING=OFF -DSPDLOG_BUILD_EXAMPLE=OFF -DSPDLOG_BUILD_TESTS=OFF -DSPDLOG_FMT_EXTERNAL=ON",
+      "build_dir": "",
+      "post_install": ""
+    }
+  ],
+  "pip": [
+    {
+      "name": "pyyaml",
+      "version": "6.0.1"
+    },
+    {
+      "name": "numpy",
+      "version": "1.26.4"
+    },
+    {
+      "name": "requests",
+      "version": "2.31.0"
+    }
+  ]
+}

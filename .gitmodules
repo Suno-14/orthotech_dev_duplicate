@@ -1,3 +1,4 @@
-[submodule "third_party/ur_rtde"]
-	path = third_party/ur_rtde
-	url = https://github.com/robinsource/ur_rtde
+[submodule "src/supervisor"]
+	path = src/supervisor
+	url = git@github.com:IGRS-Robotics/supervisor.git
+	branch = main

@@ -37,7 +37,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 REQ_FILE="${REPO_ROOT}/generated/linux-requirements.json"
 INSTALL_PREFIX="/opt/orthotech_dev"
-SOURCE_CACHE="${INSTALL_PREFIX}/src"
+SOURCE_CACHE="${INSTALL_PREFIX}/thirdparty"
 BUILD_DIR="${REPO_ROOT}/build"
 
 # ── Flags ─────────────────────────────────────────────────────────────────────
@@ -123,7 +123,7 @@ specs = [
     for p in pkgs
 ]
 print(f"  Installing: {' '.join(specs)}")
-subprocess.run([sys.executable, "-m", "pip", "install"] + specs, check=True)
+subprocess.run([sys.executable, "-m", "pip", "install"] + specs + ["--break-system-packages"], check=True)
 PYEOF
 ok "pip packages done."
 

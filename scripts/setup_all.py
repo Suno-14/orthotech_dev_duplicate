@@ -73,57 +73,57 @@ def generate_requirements():
     print(" Requirements generated successfully.")
 
 def update_submodules():
-    """Reads submodule_branches.json and dynamically forces each submodule
-    to track and pull its explicitly mapped development/production branch."""
+    """Reads submodule_branches.json and dynamically ensures ONLY mapped 
+    submodules are cloned, tracked, and pulled."""
     json_path = Path("config/submodule_branches.json")
 
+    # If the JSON is missing, crash immediately instead of doing a loose global sync!
     if not json_path.exists():
-        print(f"  [GIT] Warning: '{json_path}' not found. Falling back to standard update.")
-        try:
-            subprocess.run(["git", "submodule", "update", "--init", "--recursive"], check=True)
-            return
-        except subprocess.CalledProcessError:
-            sys.exit(1)
+        print(f"  [GIT] Error: Critical configuration '{json_path}' is missing! Aborting.")
+        sys.exit(1)
 
     print(f"\n [GIT] Loading branch mappings from {json_path}...")
     with open(json_path, "r", encoding="utf-8") as f:
         submodule_map = json.load(f)
 
     try:
-        # 1. Initialize all submodules structural frameworks first
-        subprocess.run(["git", "submodule", "init"], check=True)
+        for sub_name, config in submodule_map.items():
+            if isinstance(config, dict):
+                branch_name = config.get("branch", "main")
+                repo_url = config.get("url")
+                sub_path = config.get("path", f"src/{sub_name}")
+            else:
+                branch_name = config
+                repo_url = None
+                sub_path = sub_name
 
-        # 2. Iterate through each submodule and point Git to the mapped branch
-        for sub_path, branch_name in submodule_map.items():
             normalized_path = os.path.normpath(sub_path)
 
-            # Skip root repo tracking
-            if sub_path.lower() == "software" or normalized_path == ".":
-                print("  [GIT] Skipping root repository pointer ('Software')")
-                continue
+            # Only add it if it's missing AND explicitly declared with a URL here
+            if not os.path.exists(normalized_path) or not os.listdir(normalized_path):
+                if repo_url:
+                    print(f" [GIT] New submodule detected in JSON! Provisioning '{normalized_path}'...")
+                    subprocess.run([
+                        "git", "submodule", "add", "-b", branch_name, repo_url, normalized_path
+                    ], check=True)
+                else:
+                    continue
+            else:
+                subprocess.run(["git", "submodule", "init", normalized_path], check=True)
 
-            print(f" [GIT] Configuring tracking: {normalized_path} → branch: [{branch_name}]")
-
+            # Set tracking branch specifically for THIS submodule path
+            subprocess.run(["git", "submodule", "set-branch", "--branch", branch_name, normalized_path], check=True)
+            
+            # Explicitly target ONLY this specific path during updates!
+            print(f" [GIT] Updating targeted submodule: {normalized_path}")
             subprocess.run([
-                "git", "submodule", "set-branch",
-                "--branch", branch_name,
-                normalized_path
+                "git", "submodule", "update", "--init", "--recursive", "--remote", "--merge", normalized_path
             ], check=True)
 
-        # 3. Pull all submodules to their mapped branches
-        print("\n [GIT] Pulling latest remote changes for all submodules...")
-        subprocess.run([
-            "git", "submodule", "update",
-            "--init",
-            "--recursive",
-            "--remote",
-            "--merge"
-        ], check=True)
-
-        print("[GIT] All submodules successfully updated to their mapped branches!")
+        print("[GIT] All JSON-defined submodules successfully synchronized!")
 
     except subprocess.CalledProcessError as e:
-        print(f" Error updating branch-mapped submodules: {e}")
+        print(f" Error executing Git automation pipeline: {e}")
         sys.exit(1)
 
 def main():
@@ -160,11 +160,14 @@ def main():
         print("\n Skipping Git submodule pull step (handled by caller environment).")
 
     # Step 2: Check admin privileges (only needed for prerequisite installs)
-    if not args.skip_prereqs and not is_admin():
-        if target_os == "Windows":
-            print(" Error: You must run this script from an Administrator PowerShell prompt.")
-        else:
-            print(" Error: You must run this script with sudo (e.g., sudo python3 setup_all.py).")
+    # if not args.skip_prereqs and not is_admin():
+    #     if target_os == "Windows":
+    #         print(" Error: You must run this script from an Administrator PowerShell prompt.")
+    #     else:
+    #         print(" Error: You must run this script with sudo (e.g., sudo python3 setup_all.py).")
+    #     sys.exit(1)
+    if not args.skip_prereqs and target_os == "Windows" and not is_admin():
+        print("\n Error: You must run this script from an Administrator PowerShell prompt on Windows.")
         sys.exit(1)
 
     # Step 3: Generate requirements JSON
@@ -194,7 +197,7 @@ def main():
 
         print("\n Processing Windows build configuration...")
         
-        # 🌟 Create a copy of the existing environment variables and add UTF-8 forced compliance
+        # Create a copy of the existing environment variables and add UTF-8 forced compliance
         win_env = os.environ.copy()
         win_env["PYTHONUTF8"] = "1"
         
@@ -207,7 +210,11 @@ def main():
             run_script(["bash", "scripts/install-prerequisites.sh"])
 
         print("\n Processing Linux build configuration...")
-        run_script(["bash", "scripts/dev-setup.sh", "--build", "--test"])
+        linux_cmd = ["bash", "scripts/dev-setup.sh", "--build", "--test"]
+        if args.skip_prereqs:
+            linux_cmd.append("--skip-prereqs")
+            
+        run_script(linux_cmd)
 
     else:
         print(f" Unsupported Operating System Configuration: {target_os}")
