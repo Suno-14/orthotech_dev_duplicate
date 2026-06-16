@@ -47,11 +47,14 @@ jobs:
       - name: Checkout Code Base
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.DEPENDENCY_GITHUB_TOKEN }}
-          submodules: true
+          submodules: false
 
       - name: Run Unified Toolchain Build & Test
         run: |
+        
+            eval "$(ssh-agent -s)"
+            ssh-add "$HOME/.ssh/id_rsa"
+        
             python3 -m venv build_env
             source build_env/bin/activate
             python3 scripts/setup_all.py 
