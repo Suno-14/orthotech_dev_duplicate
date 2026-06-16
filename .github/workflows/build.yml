@@ -22,7 +22,7 @@ on:
         description: 'Run Windows build'
         required: true
         type: boolean
-        default: true
+        default: false
 env:
   CMAKE_BUILD_PARALLEL_LEVEL: 8 # Restricts 'cmake --build' to a maximum of 8 cores
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
