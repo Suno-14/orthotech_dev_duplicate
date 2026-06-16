@@ -99,15 +99,37 @@ def update_submodules():
 
             normalized_path = os.path.normpath(sub_path)
 
-            # Only add it if it's missing AND explicitly declared with a URL here
-            if not os.path.exists(normalized_path) or not os.listdir(normalized_path):
+            # CHECK 1: Is it registered in the .gitmodules file?
+            submodule_registered = subprocess.run(
+                ["git", "config", "--file", ".gitmodules", "--get", f"submodule.{normalized_path}.path"],
+                capture_output=True, text=True
+            ).returncode == 0
+
+            # CHECK 2: Does Git's internal index history already tracking it?
+            index_check = subprocess.run(
+                ["git", "ls-files", "--error-unmatch", normalized_path],
+                capture_output=True, text=True
+            )
+            already_in_index = (index_check.returncode == 0)
+
+            # --- DECISION GATE ---
+            
+            # Case A: Git already knows about it in its index (Like in GitHub Actions!)
+            if already_in_index:
+                print(f" [GIT] '{normalized_path}' matches active tracking index. Initializing layout...")
+                subprocess.run(["git", "submodule", "init", normalized_path], check=True)
+
+            # Case B: Completely brand new (Not in .gitmodules, not in index, but folder is missing/empty)
+            elif not submodule_registered and (not os.path.exists(normalized_path) or not os.listdir(normalized_path)):
                 if repo_url:
                     print(f" [GIT] New submodule detected in JSON! Provisioning '{normalized_path}'...")
                     subprocess.run([
-                        "git", "submodule", "add", "-b", branch_name, repo_url, normalized_path
+                        "git", "submodule", "add", "-b", branch_name, "--force", repo_url, normalized_path
                     ], check=True)
                 else:
                     continue
+
+            # Case C: It's already fully registered in .gitmodules perfectly
             else:
                 subprocess.run(["git", "submodule", "init", normalized_path], check=True)
 
