@@ -66,36 +66,36 @@ jobs:
   # ----------------------------------------------------------------------------
   # Windows Server Build Pipeline
   # ----------------------------------------------------------------------------
-  build-windows:
-    name: Build — Windows
-    timeout-minutes: 60     
-    runs-on: [self-hosted, windows, orthotech]
-    if: |
-      github.event_name != 'workflow_dispatch' ||
-      (github.event_name == 'workflow_dispatch' && inputs.enable_windows == true)
-    steps:
-      - name: Checkout Code Base
-        uses: actions/checkout@v4
-        with:
-          submodules: false
+  # build-windows:
+  #   name: Build — Windows
+  #   timeout-minutes: 60     
+  #   runs-on: [self-hosted, windows, orthotech]
+  #   if: |
+  #     github.event_name != 'workflow_dispatch' ||
+  #     (github.event_name == 'workflow_dispatch' && inputs.enable_windows == true)
+  #   steps:
+  #     - name: Checkout Code Base
+  #       uses: actions/checkout@v4
+  #       with:
+  #         submodules: false
 
-      # BOOTSTRAP: Forces the runner to look inside your exact Python 3.11 directories
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+  #     # BOOTSTRAP: Forces the runner to look inside your exact Python 3.11 directories
+  #     - name: Set up Python 3.11
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.11'
 
-      # UNIFIED PIPELINE: Calls your setup toolchain completely using pwsh
-      - name: Run Unified Toolchain Build & Test
-        shell: pwsh
-        run: |
-          py -3 scripts/setup_all.py --skip-pull
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+  #     # UNIFIED PIPELINE: Calls your setup toolchain completely using pwsh
+  #     - name: Run Unified Toolchain Build & Test
+  #       shell: pwsh
+  #       run: |
+  #         py -3 scripts/setup_all.py --skip-pull
+  #         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Upload Windows Build Artifacts
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-windows
-          path: build/
-          retention-days: 7
+  #     - name: Upload Windows Build Artifacts
+  #       if: success()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: build-windows
+  #         path: build/
+  #         retention-days: 7
