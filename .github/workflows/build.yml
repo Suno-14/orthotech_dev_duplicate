@@ -50,11 +50,10 @@ jobs:
           submodules: false
 
       - name: Run Unified Toolchain Build & Test
+        env:
+            # THE GOLD STANDARD: Forwards the host machine's system SSH keys automatically
+            SSH_AUTH_SOCK: ${{ env.SSH_AUTH_SOCK }}
         run: |
-        
-            eval "$(ssh-agent -s)"
-            ssh-add "$HOME/.ssh/id_rsa"
-        
             python3 -m venv build_env
             source build_env/bin/activate
             python3 scripts/setup_all.py 

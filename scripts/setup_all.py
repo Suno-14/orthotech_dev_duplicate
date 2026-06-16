@@ -77,7 +77,6 @@ def update_submodules():
     submodules are cloned, tracked, and pulled."""
     json_path = Path("config/submodule_branches.json")
 
-    # If the JSON is missing, crash immediately instead of doing a loose global sync!
     if not json_path.exists():
         print(f"  [GIT] Error: Critical configuration '{json_path}' is missing! Aborting.")
         sys.exit(1)
@@ -99,13 +98,12 @@ def update_submodules():
 
             normalized_path = os.path.normpath(sub_path)
 
-            # CHECK 1: Is it registered in the .gitmodules file?
+            # Check Git configuration statuses
             submodule_registered = subprocess.run(
                 ["git", "config", "--file", ".gitmodules", "--get", f"submodule.{normalized_path}.path"],
                 capture_output=True, text=True
             ).returncode == 0
 
-            # CHECK 2: Does Git's internal index history already tracking it?
             index_check = subprocess.run(
                 ["git", "ls-files", "--error-unmatch", normalized_path],
                 capture_output=True, text=True
@@ -114,12 +112,13 @@ def update_submodules():
 
             # --- DECISION GATE ---
             
-            # Case A: Git already knows about it in its index (Like in GitHub Actions!)
+            # Case A: Git index matches but files missing/uninitialized (Perfect for GitHub Actions)
             if already_in_index:
-                print(f" [GIT] '{normalized_path}' matches active tracking index. Initializing layout...")
+                print(f" [GIT] '{normalized_path}' matches active tracking index. Materializing repository layout...")
                 subprocess.run(["git", "submodule", "init", normalized_path], check=True)
+                subprocess.run(["git", "submodule", "update", "--recursive", normalized_path], check=True)
 
-            # Case B: Completely brand new (Not in .gitmodules, not in index, but folder is missing/empty)
+            # Case B: Completely brand new configuration added to JSON file
             elif not submodule_registered and (not os.path.exists(normalized_path) or not os.listdir(normalized_path)):
                 if repo_url:
                     print(f" [GIT] New submodule detected in JSON! Provisioning '{normalized_path}'...")
@@ -127,17 +126,17 @@ def update_submodules():
                         "git", "submodule", "add", "-b", branch_name, "--force", repo_url, normalized_path
                     ], check=True)
                 else:
+                    print(f" [GIT] Warning: '{normalized_path}' missing target URL in JSON tracking map. Skipping.")
                     continue
 
-            # Case C: It's already fully registered in .gitmodules perfectly
+            # Case C: Fully configured submodule track state
             else:
+                print(f" [GIT] Synchronizing local mapping layout for: {normalized_path}")
                 subprocess.run(["git", "submodule", "init", normalized_path], check=True)
 
-            # Set tracking branch specifically for THIS submodule path
+            # Unified track updates for all cases
             subprocess.run(["git", "submodule", "set-branch", "--branch", branch_name, normalized_path], check=True)
-            
-            # Explicitly target ONLY this specific path during updates!
-            print(f" [GIT] Updating targeted submodule: {normalized_path}")
+            print(f" [GIT] Pulling and merging latest upstream tracking configurations for: {normalized_path}")
             subprocess.run([
                 "git", "submodule", "update", "--init", "--recursive", "--remote", "--merge", normalized_path
             ], check=True)
