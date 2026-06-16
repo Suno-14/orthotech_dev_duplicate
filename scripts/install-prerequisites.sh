@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # install-prerequisites.sh — Install all build prerequisites on Linux
-#
-# Run this once on a fresh machine before anything else.
-#
-#  Usage:
-#   chmod +x install-prerequisites.sh
-#   ./install-prerequisites.sh
 # ==============================================================================
 
 set -euo pipefail
@@ -109,7 +103,6 @@ install_python() {
     sudo add-apt-repository -y ppa:deadsnakes/ppa
     sudo apt-get update -qq
     sudo apt-get install -y python3.11 python3.11-venv python3.11-dev
-    # sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
     curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
 }
 
@@ -119,7 +112,6 @@ if command -v python3 &>/dev/null; then
     PY_MINOR=$(echo "$PY_VER" | cut -d. -f2)
     if (( PY_MAJOR > 3 )) || (( PY_MAJOR == 3 && PY_MINOR >= 11 )); then
         ok "Python $PY_VER already installed (meets minimum 3.11)."
-        # Ensure pip is available
         python3 -m pip --version &>/dev/null || {
             log "pip not found. Installing..."
             curl -sS https://bootstrap.pypa.io/get-pip.py | python3
@@ -137,9 +129,84 @@ fi
 
 # ── Step 5: pip packages needed by the toolchain ─────────────────────────────
 header "Step 5 — Python toolchain packages"
-python3 -m pip install --quiet --upgrade pip --break-system-packages
-python3 -m pip install --quiet pyyaml --break-system-packages
-ok "pyyaml installed."
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REQ_FILE="$SCRIPT_DIR/../generated/linux-requirements.json"
+export REQ_FILE
+
+python3 - <<'PYEOF'
+import json, subprocess, sys, os
+
+req_file = os.environ.get("REQ_FILE")
+if not req_file or not os.path.exists(req_file):
+    print(f"ERROR: Requirements file missing: {req_file}")
+    sys.exit(1)
+
+try:
+    with open(req_file) as f:
+        data = json.load(f)
+except Exception as e:
+    print(f"ERROR: Failed to parse JSON: {e}")
+    sys.exit(1)
+
+# Pull python packages array
+pkgs = data.get("pip", [])
+if not pkgs:
+    print("No pip packages defined.")
+    sys.exit(0)
+
+specs = [
+    f"{p['name']}=={p['version']}"
+    if isinstance(p, dict) and p.get("version") and p["version"] != "latest"
+    else p["name"] if isinstance(p, dict)
+    else p
+    for p in pkgs
+]
+
+print(f" Installing pip packages: {' '.join(specs)}")
+try:
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install"] + specs + ["--break-system-packages"],
+        check=True
+    )
+except subprocess.CalledProcessError as e:
+    sys.exit(e.returncode)
+PYEOF
+
+
+# ── Step 5b — Linux system packages (Using Your Heredoc Strategy!) ───────────
+header "Step 5b — Installing Dependencies from configuration mapping"
+
+python3 - <<'PYEOF'
+import json, subprocess, sys, os
+
+req_file = os.environ.get("REQ_FILE")
+try:
+    with open(req_file) as f:
+        data = json.load(f)
+except Exception as e:
+    print(f"ERROR: Failed to read requirements: {e}")
+    sys.exit(1)
+
+# Pull apt system packages array
+packages = data.get("packages", [])
+if not packages:
+    print("No system packages defined.")
+    sys.exit(0)
+
+# Extract name safely whether it's a raw string or dictionary
+extracted = [p["name"] if isinstance(p, dict) and "name" in p else p for p in packages if p]
+sys_pkgs = [p for p in extracted if isinstance(p, str)]
+
+if sys_pkgs:
+    print(f"Installing Linux system targets: {' '.join(sys_pkgs)}")
+    try:
+        subprocess.run(["sudo", "apt-get", "install", "-y"] + sys_pkgs, check=True)
+    except subprocess.CalledProcessError as e:
+        sys.exit(e.returncode)
+else:
+    print("No valid system packages found to install.")
+PYEOF
 
 # ── Step 6: Verify everything ─────────────────────────────────────────────────
 header "Step 6 — Verification"
@@ -147,7 +214,6 @@ header "Step 6 — Verification"
 check() {
     local name="$1"
     local cmd="$2"
-    local expected="$3"
     if result=$(eval "$cmd" 2>/dev/null); then
         echo -e "  ${GREEN}✓${RESET} $name: $result"
     else
@@ -155,14 +221,14 @@ check() {
     fi
 }
 
-check "gcc"     "gcc --version | head -1"           ">=11"
-check "g++"     "g++ --version | head -1"           ">=11"
-check "cmake"   "cmake --version | head -1"         ">=3.22"
-check "ninja"   "ninja --version"                   "any"
-check "git"     "git --version"                     ">=2"
-check "python3" "python3 --version"                 ">=3.11"
-check "pip"     "python3 -m pip --version | head -1" "any"
-check "curl"    "curl --version | head -1"           "any"
+check "gcc"     "gcc --version | head -1"
+check "g++"     "g++ --version | head -1"
+check "cmake"   "cmake --version | head -1"
+check "ninja"   "ninja --version"
+check "git"     "git --version"
+check "python3" "python3 --version"
+check "pip"     "python3 -m pip --version | head -1"
+check "curl"    "curl --version | head -1"
 
 # ── Done ──────────────────────────────────────────────────────────────────────
 header "Done"

@@ -2,3 +2,7 @@
 	path = src/supervisor
 	url = git@github.com:IGRS-Robotics/supervisor.git
 	branch = main
+[submodule "src/Core"]
+	path = src/Core
+	url = git@github.com:IGRS-Robotics/Core.git
+	branch = dev

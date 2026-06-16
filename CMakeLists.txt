@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.22)
 project(OrthoTech CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -41,3 +41,4 @@ macro(find_package)
 endmacro()
 
 add_subdirectory(src/supervisor)
+add_subdirectory(src/Core)

@@ -85,6 +85,8 @@ dependencies:
       - libboost-all-dev
       - libopencv-dev
       - libasio-dev
+      - libfmt-dev
+      - liburdfdom-dev
 
       # System utilities deps need
       - libssl-dev
@@ -112,6 +114,45 @@ dependencies:
           -DSPDLOG_BUILD_EXAMPLE=OFF
           -DSPDLOG_BUILD_TESTS=OFF
           -DSPDLOG_FMT_EXTERNAL=ON
+      
+      # ── Pinnochio — lightweight C++ unit testing framework ───────────────────────
+      - name: pinocchio
+        repo: https://github.com/stack-of-tasks/pinocchio.git
+        tag: v3.3.0
+        post_checkout: "sed -i 's/cmake_minimum_required(VERSION .*)/cmake_minimum_required(VERSION 3.22)/g' CMakeLists.txt"
+        cmake_args: >-
+          -DCMAKE_BUILD_TYPE=Release
+          -DBUILD_SHARED_LIBS=OFF
+          -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+          -DBUILD_WITH_AUTODIFF_SUPPORT=OFF
+          -DBUILD_WITH_CASADI_SUPPORT=OFF
+          -DBUILD_WITH_CODEGEN_SUPPORT=OFF
+          -DBUILD_PYTHON_INTERFACE=OFF
+          -DBUILD_UNIT_TESTS=OFF
+          -DBUILD_EXAMPLES=OFF
+          -DBUILD_BENCHMARK=OFF
+          -DCMAKE_PREFIX_PATH=/opt/orthotech_dev  
+          
+      # Behavior Tree Engine
+      - name: BehaviorTree.CPP
+        repo: https://github.com/BehaviorTree/BehaviorTree.CPP.git
+        tag: 4.9.0
+        cmake_args: >-
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          -DCMAKE_CXX_STANDARD=17
+          -DCMAKE_CXX_STANDARD_REQUIRED=ON
+          -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+          -DBTCPP_SHARED_LIBS=OFF
+          -DBUILD_TESTING=OFF
+          -DBTCPP_EXAMPLES=OFF
+          -DBTCPP_BUILD_TOOLS=OFF
+          -DBTCPP_GROOT_INTERFACE=ON
+          -DBTCPP_SQLITE_LOGGING=OFF
+          -DUSE_VENDORED_TINYXML2=OFF
+          -DUSE_VENDORED_CPPZMQ=OFF
+          -DCMAKE_CXX_FLAGS=-D_GLIBCXX_USE_CXX11_ABI=1
+          -DCMAKE_PREFIX_PATH=/opt/orthotech_dev
+
 
   # ── Windows ─────────────────────────────────────────────────────────────────
   windows:

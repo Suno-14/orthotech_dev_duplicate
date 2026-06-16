@@ -4,5 +4,11 @@
       "branch": "main",
       "url": "git@github.com:IGRS-Robotics/supervisor.git",
       "path": "src/supervisor"
+    },
+    "Core":
+    {
+      "branch": "dev",
+      "url": "git@github.com:IGRS-Robotics/Core.git",
+      "path": "src/Core"
     }
 }

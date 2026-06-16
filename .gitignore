@@ -17,5 +17,6 @@ generated/
 __pycache__/
 
 .vscode/
+${SOURCE_CACHE}$/
 
 
