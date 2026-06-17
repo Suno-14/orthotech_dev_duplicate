@@ -38,7 +38,8 @@ jobs:
   # ----------------------------------------------------------------------------
   build-linux:
     name: Build — Linux
-    runs-on: [self-hosted, linux, orthotech]
+    # runs-on: [self-hosted, linux, orthotech]
+    runs-on: ubuntu-latest
     timeout-minutes: 60     
     if: |
       github.event_name != 'workflow_dispatch' ||
