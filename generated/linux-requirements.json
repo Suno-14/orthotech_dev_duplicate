@@ -53,6 +53,9 @@
     },
     {
       "name": "zlib1g-dev"
+    },
+    {
+      "name": "libzenohc-dev"
     }
   ],
   "vcpkg": [],
