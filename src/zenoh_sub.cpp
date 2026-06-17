@@ -1,8 +1,8 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
-#include <zenoh/api/config.hxx>
-#include <zenoh/api/session.hxx>
+// #include <zenoh/api/config.hxx>
+#include <zenoh.hxx>
 
 int main() {
     auto session = zenoh::Session::open(zenoh::Config::create_default());
