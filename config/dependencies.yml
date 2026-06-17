@@ -14,8 +14,11 @@ dependencies:
       - make
       - libeigen3-dev
       - libboost-all-dev
+      - curl  
     source:
       - ur_rtde
+      - zenoh-c
+      - zenoh-cpp
 
   windows:
     source:
