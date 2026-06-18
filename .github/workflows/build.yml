@@ -74,7 +74,8 @@ jobs:
             ninja-build \
             libssl-dev \
             libcurl4-openssl-dev
-            python3 scripts/setup_all.py 
+          
+          python3 scripts/setup_all.py 
    
       - name: Upload Linux Build Artifacts
         if: success()
