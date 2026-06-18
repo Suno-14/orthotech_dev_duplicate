@@ -36,6 +36,14 @@ echo -e "${RESET}"
 
 # ── Step 1: System update ─────────────────────────────────────────────────────
 header "Step 1 — Update package list"
+wait_for_apt() {
+    while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+        echo "Waiting for apt lock..."
+        sleep 5
+    done
+}
+
+wait_for_apt
 sudo apt-get update -qq
 ok "Package list updated."
 
@@ -61,7 +69,10 @@ PACKAGES=(
 )
 
 log "Installing: ${PACKAGES[*]}"
-sudo apt-get install -y --no-install-recommends "${PACKAGES[@]}"
+sudo apt-get install -y \
+    -o DPkg::Lock::Timeout=300 \
+    --no-install-recommends \
+    "${PACKAGES[@]}"
 ok "Core build tools installed."
 
 # ── Step 3: CMake (minimum 3.22) ─────────────────────────────────────────────
