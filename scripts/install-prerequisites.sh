@@ -27,7 +27,7 @@ fi
 command -v sudo &>/dev/null || err "sudo not found. Please install it first."
 
 # ── Banner ────────────────────────────────────────────────────────────────────
-clear
+# clear
 echo -e "${BOLD}"
 echo "  ╔══════════════════════════════════════════════════════╗"
 echo "  ║     orthotech_dev — Linux Prerequisites Setup        ║"
