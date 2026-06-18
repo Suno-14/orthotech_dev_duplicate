@@ -28,6 +28,10 @@ command -v sudo &>/dev/null || err "sudo not found. Please install it first."
 
 # ── Banner ────────────────────────────────────────────────────────────────────
 # clear
+if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+    echo "Running on GitHub Actions. Skipping prerequisite installation."
+    exit 0
+fi
 echo -e "${BOLD}"
 echo "  ╔══════════════════════════════════════════════════════╗"
 echo "  ║     orthotech_dev — Linux Prerequisites Setup        ║"
