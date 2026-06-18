@@ -66,6 +66,14 @@ jobs:
 
             python3 -m venv build_env
             source build_env/bin/activate
+            - name: Install CI dependencies
+              run: |
+                sudo apt-get update
+                sudo apt-get install -y \
+                  libboost-all-dev \
+                  ninja-build \
+                  libssl-dev \
+                  libcurl4-openssl-dev
             python3 scripts/setup_all.py 
    
       - name: Upload Linux Build Artifacts
