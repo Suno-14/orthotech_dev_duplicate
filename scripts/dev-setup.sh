@@ -31,6 +31,10 @@ BUILD_DIR="${REPO_ROOT}/build"
 
 export REQ_FILE INSTALL_PREFIX SOURCE_CACHE
 
+if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+    echo "[INFO] Running on GitHub Actions"
+    SKIP_APT_INSTALL=1
+fi
 # ── Flags ─────────────────────────────────────────────────────────────────────
 REGEN=false; CLEAN=false; DO_BUILD=false; DO_TEST=false
 
@@ -75,6 +79,7 @@ sudo mkdir -p "${INSTALL_PREFIX}" "${SOURCE_CACHE}"
 sudo chown -R "${USER}:${USER}" "${INSTALL_PREFIX}"
 
 # ── Step 3: apt packages ──────────────────────────────────────────────────────
+if [[ "${SKIP_APT_INSTALL:-0}" != "1" ]]; then
 header "Step 2 — apt packages"
 python3 - <<'PYEOF'
 import json, subprocess, sys, os
@@ -95,6 +100,8 @@ subprocess.run([
 ] + pkgs, check=True)
 PYEOF
 ok "apt packages done."
+fi
+
 
 # ── Step 4: pip packages ──────────────────────────────────────────────────────
 header "Step 3 — pip packages"
