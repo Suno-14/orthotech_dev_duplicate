@@ -113,7 +113,7 @@ dependencies:
           -DBUILD_TESTING=OFF
           -DSPDLOG_BUILD_EXAMPLE=OFF
           -DSPDLOG_BUILD_TESTS=OFF
-          -DSPDLOG_FMT_EXTERNAL=ON
+#          -DSPDLOG_FMT_EXTERNAL=ON
       
       # ── Pinnochio — lightweight C++ unit testing framework ───────────────────────
       - name: pinocchio
