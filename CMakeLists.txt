@@ -32,7 +32,7 @@ endif()
 
 set(as_subproject;
     supervisor;
-    Core;
+    # Core;
     )
 
 macro(find_package)
@@ -41,5 +41,5 @@ macro(find_package)
     endif()
 endmacro()
 
-add_subdirectory(src/Core)
+# add_subdirectory(src/Core)
 add_subdirectory(src/supervisor)
