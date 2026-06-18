@@ -2,7 +2,7 @@
     "supervisor": 
     {
       "branch": "main",
-      "url": "git@github.com:IGRS-Robotics/supervisor.git",
+      "url": "git@github.com:Suno-14/supervisor.git",
       "path": "src/supervisor"
     }
 }

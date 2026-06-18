@@ -1,5 +1,5 @@
 [submodule "src/supervisor"]
-    path = src/supervisor
-    url = https://github.com/Suno-14/supervisor.git
-    branch = main
+	path = src/supervisor
+	url = https://github.com/Suno-14/supervisor.git
+	branch = main
 
