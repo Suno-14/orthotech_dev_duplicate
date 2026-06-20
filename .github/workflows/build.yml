@@ -73,6 +73,7 @@ jobs:
             libboost-all-dev \
             ninja-build \
             libssl-dev \
+            libeigen3-dev \
             libcurl4-openssl-dev
           
           python3 scripts/setup_all.py 
